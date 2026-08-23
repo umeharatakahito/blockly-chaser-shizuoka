@@ -7,5 +7,7 @@
     "MATCH_TITLE": "対 戦",
     "CONFIG": "設定",
     "MOVIES_INFO": "過去の試合を見てみよう！",
-    "MOVIES_TITLE": "試合動画"
+    "MOVIES_TITLE": "試合動画",
+    "BRACKET_INFO": "だれが勝ち上がる？",
+    "BRACKET_TITLE": "対戦表"
 }

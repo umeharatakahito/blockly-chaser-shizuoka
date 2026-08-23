@@ -1,0 +1,129 @@
+{
+  "title": "U-16プログラミングコンテスト静岡大会 2026",
+  "players": [
+    {
+      "id": "p1",
+      "name": "あおい",
+      "school": "静岡第一中"
+    },
+    {
+      "id": "p2",
+      "name": "はると",
+      "school": "浜松東中"
+    },
+    {
+      "id": "p3",
+      "name": "ゆい",
+      "school": "沼津西中"
+    },
+    {
+      "id": "p4",
+      "name": "そら",
+      "school": "富士南中"
+    },
+    {
+      "id": "p5",
+      "name": "りく",
+      "school": "三島北中"
+    },
+    {
+      "id": "p6",
+      "name": "みなと",
+      "school": "藤枝中"
+    }
+  ],
+  "rounds": [
+    {
+      "name": "準々決勝",
+      "matches": [
+        {
+          "id": "r1m1",
+          "coolId": "p1",
+          "hotId": null,
+          "winnerId": "p1",
+          "coolScore": null,
+          "hotScore": null,
+          "note": "不戦勝",
+          "roomId": "",
+          "movieId": ""
+        },
+        {
+          "id": "r1m2",
+          "coolId": "p4",
+          "hotId": "p5",
+          "winnerId": "p4",
+          "coolScore": 14,
+          "hotScore": 9,
+          "note": "アイテム数により",
+          "roomId": "room_111",
+          "movieId": "final-2025"
+        },
+        {
+          "id": "r1m3",
+          "coolId": "p2",
+          "hotId": null,
+          "winnerId": "p2",
+          "coolScore": null,
+          "hotScore": null,
+          "note": "不戦勝",
+          "roomId": "",
+          "movieId": ""
+        },
+        {
+          "id": "r1m4",
+          "coolId": "p3",
+          "hotId": "p6",
+          "winnerId": "p6",
+          "coolScore": 6,
+          "hotScore": 11,
+          "note": "アタックにより",
+          "roomId": "room_111",
+          "movieId": ""
+        }
+      ]
+    },
+    {
+      "name": "準決勝",
+      "matches": [
+        {
+          "id": "r2m1",
+          "coolId": "p1",
+          "hotId": "p4",
+          "winnerId": "p1",
+          "coolScore": 10,
+          "hotScore": 7,
+          "note": "ブロック閉じ込めにより",
+          "roomId": "room_113",
+          "movieId": ""
+        },
+        {
+          "id": "r2m2",
+          "coolId": "p2",
+          "hotId": "p6",
+          "winnerId": null,
+          "coolScore": null,
+          "hotScore": null,
+          "note": "",
+          "roomId": "",
+          "movieId": ""
+        }
+      ]
+    },
+    {
+      "name": "決勝",
+      "matches": [
+        {
+          "id": "r3m1",
+          "coolId": "p1",
+          "hotId": null,
+          "winnerId": null,
+          "coolScore": null,
+          "hotScore": null,
+          "note": "",
+          "roomId": "",
+          "movieId": ""
+        }
+      ]
+    }
+  ]
+}

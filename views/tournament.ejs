@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>CHaser 対戦表</title>
+  <link rel="icon" href="/images/favicon.ico">
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+  <link rel='stylesheet' href='/stylesheets/tournament.css' />
+
+  <%- include('./common/config-init') %>
+
+    <script src="/javascripts/jquery-3.4.1.min.js"></script>
+</head>
+
+<body>
+
+  <%- include('./common/config', {LNG: C_LNG}) %>
+
+    <div class="header">
+      <div class="back_page">
+        <div class="back_button"><a href="/"></a></div>
+      </div>
+      <div class="control_area">
+        <div class="page_title">
+          <h1><span class="page_title_span">対戦表</span><%- title %></h1>
+        </div>
+        <div class="control_button">
+          <button id="configButton" title="<%- C_LNG[" CONFIG"] %>"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bracket_area">
+
+      <h2 class="bracket_title"><%= bracket.title %></h2>
+
+      <% if (bracket.rounds.length === 0) { %>
+        <div class="bracket_empty">
+          <p class="bracket_empty_main">対戦表はまだ作られていません。</p>
+          <p class="bracket_empty_hint">運営が組み合わせを決めると、ここに表示されます。</p>
+        </div>
+      <% } else { %>
+
+        <% if (bracket.champion) { %>
+          <div class="bracket_champion">
+            <div class="bracket_champion_label">優勝</div>
+            <div class="bracket_champion_name"><%= bracket.champion.name %></div>
+            <% if (bracket.champion.school) { %>
+              <div class="bracket_champion_school"><%= bracket.champion.school %></div>
+            <% } %>
+          </div>
+        <% } %>
+
+        <div class="bracket_scroll">
+          <div class="bracket">
+            <% bracket.rounds.forEach(function (round, ri) { %>
+              <div class="bracket_round">
+                <div class="bracket_round_name"><%= round.name %></div>
+                <div class="bracket_matches">
+                  <% round.matches.forEach(function (match) { %>
+                    <div class="bracket_match<%= ri < bracket.rounds.length - 1 ? ' has_next' : '' %>">
+                      <div class="bracket_card">
+
+                        <% ['cool', 'hot'].forEach(function (side) { %>
+                          <%
+                            var player = match[side];
+                            var score = side === 'cool' ? match.coolScore : match.hotScore;
+                            var isWinner = player && match.winnerId === player.id;
+                            var isLoser = player && match.winnerId && match.winnerId !== player.id;
+                          %>
+                          <div class="bracket_slot bracket_slot_<%= side %><%= isWinner ? ' is_winner' : '' %><%= isLoser ? ' is_loser' : '' %>">
+                            <span class="bracket_slot_name"><%= player ? player.name : '―' %></span>
+                            <% if (score !== null && score !== undefined) { %>
+                              <span class="bracket_slot_score"><%= score %></span>
+                            <% } %>
+                          </div>
+                        <% }); %>
+
+                        <% if (match.note || match.movieId) { %>
+                          <div class="bracket_meta">
+                            <% if (match.note) { %><span class="bracket_note"><%= match.note %></span><% } %>
+                            <% if (match.movieId) { %>
+                              <a class="bracket_movie" href="/movies/<%= encodeURIComponent(match.movieId) %>">動画</a>
+                            <% } %>
+                          </div>
+                        <% } %>
+
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <p class="bracket_updated">この画面は30秒ごとに自動で更新されます。</p>
+      <% } %>
+
+    </div>
+
+    <script>
+      // 運営が結果を入力したら自動で反映する。
+      // 更新頻度が低いので Socket.IO は使わず、内容が変わったときだけ読み込み直す。
+      (function () {
+        var current = null;
+
+        function poll() {
+          fetch('/tournament/data', { cache: 'no-store' })
+            .then(function (res) { return res.ok ? res.json() : null; })
+            .then(function (data) {
+              if (!data) return;
+              var next = JSON.stringify(data);
+              if (current === null) { current = next; return; }
+              if (next !== current) location.reload();
+            })
+            .catch(function () { /* 通信が切れても画面は保ちたいので握りつぶす */ });
+        }
+
+        poll();
+        setInterval(poll, 30000);
+      })();
+    </script>
+
+</body>
+
+</html>

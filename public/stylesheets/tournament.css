@@ -1,0 +1,240 @@
+/*
+ * トーナメント表。
+ *
+ * 外部ライブラリは使わない。会場LANでは外部への到達性が保証されないため、
+ * 描画は CSS だけで完結させる。
+ *
+ * 各回戦を横に並べ、回戦内の試合は縦に等間隔で置く。
+ * 次の回戦の試合が、その2つの試合のちょうど中間に来るのは
+ * .bracket_match { flex: 1 } と align-items: center の組み合わせによる。
+ */
+
+.bracket_area {
+  padding: 24px 16px 64px;
+}
+
+.bracket_title {
+  text-align: center;
+  font-size: 20px;
+  color: #00639a;
+  margin: 0 0 24px;
+}
+
+.bracket_scroll {
+  overflow-x: auto;
+  padding-bottom: 12px;
+}
+
+.bracket {
+  display: flex;
+  gap: 48px;
+  min-width: min-content;
+  padding: 8px;
+}
+
+.bracket_round {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+.bracket_round_name {
+  text-align: center;
+  font-weight: bold;
+  color: #00639a;
+  background: #e6f4fc;
+  border-radius: 999px;
+  padding: 6px 12px;
+  margin-bottom: 12px;
+  white-space: nowrap;
+}
+
+.bracket_matches {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* 1回戦の試合数が多くても各カードが潰れない高さを確保する */
+  min-height: 120px;
+}
+
+.bracket_match {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.bracket_card {
+  width: 100%;
+  /* 試合どうしが密着して読みにくくならないよう、最低限の間隔を空ける */
+  margin: 8px 0;
+  background: #fff;
+  border: solid 2px #cfe8f7;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+/*
+ * 接続線は3本の組み合わせで描く。
+ *   1. カード右端から、回戦間の余白の半分(24px)まで伸びる横線
+ *   2. 対になる2試合を結ぶ縦線(奇数番の試合にだけ引く)
+ *   3. 次の回戦のカード左端から余白の半分まで戻る横線
+ * 縦線の高さが 100% でちょうど隣の試合の中心に届くのは、
+ * .bracket_match が flex: 1 で等分され、中心間の距離が試合の高さと等しいため。
+ */
+.bracket_match.has_next .bracket_card::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -24px;
+  width: 24px;
+  border-top: solid 2px #b9dcf1;
+}
+
+.bracket_match.has_next:nth-child(odd)::after {
+  content: '';
+  position: absolute;
+  right: -24px;
+  top: 50%;
+  height: 100%;
+  border-right: solid 2px #b9dcf1;
+}
+
+.bracket_round:not(:first-child) .bracket_card::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -24px;
+  width: 24px;
+  border-top: solid 2px #b9dcf1;
+}
+
+.bracket_slot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 15px;
+  color: #4d4d4d;
+  border-left: solid 5px transparent;
+}
+
+.bracket_slot + .bracket_slot {
+  border-top: solid 1px #eee;
+}
+
+/* cool / hot はゲーム画面と同じ色の対応にする */
+.bracket_slot_cool { border-left-color: #00a0e6; }
+.bracket_slot_hot { border-left-color: #e05a4f; }
+
+.bracket_slot_name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bracket_slot_score {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-weight: bold;
+  color: #5d5d5d;
+}
+
+.bracket_slot.is_winner {
+  background: #eaf7ea;
+  font-weight: bold;
+  color: #2e7d32;
+}
+
+.bracket_slot.is_loser {
+  color: #a0a0a0;
+}
+
+.bracket_meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #fafafa;
+  border-top: solid 1px #eee;
+  font-size: 12px;
+}
+
+.bracket_note {
+  color: #8a8a8a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bracket_movie {
+  flex: none;
+  margin-left: auto;
+  color: #fff;
+  background: #4CAF50;
+  border-radius: 999px;
+  padding: 2px 10px;
+  text-decoration: none;
+}
+
+.bracket_movie:hover { background: #3d9140; }
+
+/* --- 優勝者 --- */
+
+.bracket_champion {
+  max-width: 420px;
+  margin: 0 auto 28px;
+  padding: 20px;
+  text-align: center;
+  background: linear-gradient(180deg, #fff8e1 0%, #ffecb3 100%);
+  border: solid 2px #ffd54f;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.bracket_champion_label {
+  font-size: 13px;
+  font-weight: bold;
+  color: #8a6d00;
+  letter-spacing: 0.3em;
+}
+
+.bracket_champion_name {
+  margin-top: 4px;
+  font-size: 28px;
+  font-weight: bold;
+  color: #5d4600;
+}
+
+.bracket_champion_school {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #8a6d00;
+}
+
+/* --- 対戦表がないとき --- */
+
+.bracket_empty {
+  max-width: 520px;
+  margin: 60px auto;
+  text-align: center;
+  padding: 48px 16px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  color: #5d5d5d;
+}
+
+.bracket_empty_main { font-size: 18px; font-weight: bold; }
+.bracket_empty_hint { margin-top: 12px; font-size: 14px; color: #8a8a8a; }
+
+.bracket_updated {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 12px;
+  color: #8a8a8a;
+}
