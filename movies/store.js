@@ -17,6 +17,9 @@ const path = require('path');
 
 const MOVIE_DIR = path.join(__dirname, '..', 'load_data', 'movie_data');
 const META_FILE = path.join(MOVIE_DIR, 'movies.json');
+// 非公開にした動画の置き場。listFiles は直下しか見ないので一覧から消える。
+// 削除ではなく退避にしているのは、誤操作から戻せるようにするため
+const HIDDEN_DIR = path.join(MOVIE_DIR, '_hidden');
 
 // ブラウザの <video> がそのまま再生できる形式だけを扱う。
 // これ以外の拡張子はディレクトリにあっても一覧に出さない
@@ -27,6 +30,27 @@ const MIME_TYPES = {
   '.m4v': 'video/mp4',
   '.webm': 'video/webm',
 };
+
+/**
+ * multipart で届いたファイル名を UTF-8 として読み直す。
+ *
+ * busboy(multer が内部で使う)は multipart のファイル名を latin1 として解釈する。
+ * そのため「決勝戦.mp4」の UTF-8 バイト列が1バイトずつ別の文字として届き、
+ * そのまま sanitizeFileName に渡すと日本語がすべて _ に潰れてしまう。
+ * latin1 として書き戻してから UTF-8 で読み直すことで元の名前を復元する。
+ *
+ * ASCII だけの名前はこの変換で何も変わらない。
+ * 復元に失敗した場合(U+FFFD が出る)は元の文字列をそのまま返す。
+ */
+function decodeUploadFileName(name) {
+  const raw = String(name || '');
+  try {
+    const decoded = Buffer.from(raw, 'latin1').toString('utf8');
+    return decoded.includes('\uFFFD') ? raw : decoded;
+  } catch (e) {
+    return raw;
+  }
+}
 
 /**
  * アップロードされたファイル名を安全な形に直す。
@@ -172,8 +196,62 @@ function resolveFilePath(movie) {
   return path.resolve(full).startsWith(root + path.sep) ? full : null;
 }
 
+/**
+ * 一覧の編集内容を movies.json に保存する。
+ * 画面から送られてくる値だけを取り込み、余計なキーは持ち込ませない。
+ */
+function saveMovieMeta(entries) {
+  const movies = [];
+  for (const entry of entries) {
+    if (!entry || typeof entry.file !== 'string') continue;
+    const file = path.basename(entry.file);
+    if (!isAllowedFile(file)) continue;
+
+    movies.push({
+      id: sanitizeId(entry.id || path.basename(file, path.extname(file))),
+      file,
+      title: String(entry.title || '').trim() || file,
+      description: String(entry.description || '').trim(),
+      date: String(entry.date || '').trim(),
+      order: Number.isFinite(Number(entry.order)) ? Number(entry.order) : 999,
+    });
+  }
+  movies.sort((a, b) => a.order - b.order);
+  writeMeta(movies);
+  return movies;
+}
+
+/**
+ * 動画を非公開にする。ファイルを _hidden/ へ移し、movies.json からも外す。
+ * 戻したい場合は _hidden/ から1つ上へ移動すればよい。
+ */
+function hideMovie(id) {
+  const movie = getMovie(id);
+  if (!movie) return false;
+
+  const from = resolveFilePath(movie);
+  if (!from || !fs.existsSync(from)) return false;
+
+  fs.mkdirSync(HIDDEN_DIR, { recursive: true });
+
+  // 同名のファイルが既に退避されている場合は上書きせず、連番を足す
+  let to = path.join(HIDDEN_DIR, path.basename(movie.file));
+  if (fs.existsSync(to)) {
+    const ext = path.extname(to);
+    const stem = path.basename(to, ext);
+    let n = 2;
+    while (fs.existsSync(path.join(HIDDEN_DIR, `${stem}_${n}${ext}`))) n++;
+    to = path.join(HIDDEN_DIR, `${stem}_${n}${ext}`);
+  }
+
+  fs.renameSync(from, to);
+  writeMeta(readMeta().filter((e) => path.basename(String(e.file || '')) !== movie.file));
+  return true;
+}
+
 module.exports = {
-  MOVIE_DIR, META_FILE, ALLOWED_EXT,
-  sanitizeFileName, sanitizeId, isAllowedFile, mimeTypeFor,
+  MOVIE_DIR, META_FILE, HIDDEN_DIR, ALLOWED_EXT,
+  saveMovieMeta, hideMovie,
+  decodeUploadFileName, sanitizeFileName, sanitizeId, isAllowedFile, mimeTypeFor,
   listFiles, readMeta, writeMeta, listMovies, getMovie, resolveFilePath,
 };

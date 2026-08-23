@@ -19,6 +19,8 @@ var menuMatchRouter = require('./routes/menu-match');
 var matchRouter = require('./routes/match');
 var watchingRouter = require('./routes/watching');
 var moviesRouter = require('./routes/movies');
+var moviesAdminRouter = require('./routes/movies-admin');
+var adminAuth = require('./tool/admin_auth');
 
 var server_data = require('./tool/server_data_load');
 var tutorial_data = require('./tool/tutorial_data_load');
@@ -61,7 +63,11 @@ app.use('/tutorial', tutorialRouter);
 app.use('/menu-match',menuMatchRouter);
 app.use('/match', matchRouter);
 app.use('/watching',watchingRouter);
+// /movies/admin は /movies/:id に食われるため、先に登録する
+app.use('/movies/admin', moviesAdminRouter);
 app.use('/movies', moviesRouter);
+app.post('/admin/login', adminAuth.loginHandler);
+app.post('/admin/logout', adminAuth.logoutHandler);
 
 
 

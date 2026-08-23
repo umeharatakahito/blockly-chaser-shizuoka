@@ -15,6 +15,54 @@
       "description": "ブロックを使って相手の動きを制限する戦術の例。",
       "date": "2025-10-12",
       "order": 2
+    },
+    {
+      "id": "A",
+      "file": "A.mp4",
+      "title": "テスト動画A",
+      "description": "",
+      "date": "",
+      "order": 3
+    },
+    {
+      "id": "A_3",
+      "file": "A_3.mp4",
+      "title": "テスト動画A",
+      "description": "",
+      "date": "",
+      "order": 4
+    },
+    {
+      "id": "A_5",
+      "file": "A_5.mp4",
+      "title": "テスト動画A",
+      "description": "",
+      "date": "",
+      "order": 5
+    },
+    {
+      "id": "A_7",
+      "file": "A_7.mp4",
+      "title": "テスト動画A",
+      "description": "",
+      "date": "",
+      "order": 6
+    },
+    {
+      "id": "テスト動画A",
+      "file": "テスト動画A.mp4",
+      "title": "テスト動画A",
+      "description": "",
+      "date": "",
+      "order": 7
+    },
+    {
+      "id": "テスト動画A",
+      "file": "テスト動画A.mp4",
+      "title": "テスト動画A",
+      "description": "",
+      "date": "",
+      "order": 8
     }
   ]
 }

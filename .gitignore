@@ -1,3 +1,5 @@
 node_modules/
 log/
 dist/
+# 非公開にした動画の退避先
+load_data/movie_data/_hidden/

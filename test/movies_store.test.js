@@ -152,3 +152,29 @@ test('再生できない拡張子のファイルは一覧に出ない', () => {
 test('movies.json 自体は一覧に出ない', () => {
   assert.ok(!store.listMovies().some((m) => m.file === 'movies.json'));
 });
+
+/* --- multipart のファイル名の復号 --- */
+
+test('latin1 として届いた日本語ファイル名を復元する', () => {
+  const mangled = Buffer.from('決勝戦.mp4', 'utf8').toString('latin1');
+  assert.strictEqual(store.decodeUploadFileName(mangled), '決勝戦.mp4');
+});
+
+test('ASCII のファイル名は復号しても変わらない', () => {
+  assert.strictEqual(store.decodeUploadFileName('final-2025.mp4'), 'final-2025.mp4');
+  assert.strictEqual(store.decodeUploadFileName('a_b-c.webm'), 'a_b-c.webm');
+});
+
+test('復号できない入力は元の文字列を返す', () => {
+  // UTF-8 として不正なバイト列。壊れた名前で保存するより元のまま扱う
+  const invalid = '\xff\xfe\xfd';
+  assert.strictEqual(store.decodeUploadFileName(invalid), invalid);
+});
+
+test('復号したうえでサニタイズすると日本語が残る', () => {
+  const mangled = Buffer.from('2026年 決勝戦.mp4', 'utf8').toString('latin1');
+  assert.strictEqual(
+    store.sanitizeFileName(store.decodeUploadFileName(mangled)),
+    '2026年_決勝戦.mp4'
+  );
+});

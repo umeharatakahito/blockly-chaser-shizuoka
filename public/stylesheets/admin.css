@@ -1,0 +1,165 @@
+/*
+ * 運営ページ。参加者向けページと区別がつくよう、装飾を抑えた実務的な見た目にする。
+ */
+
+.admin_area {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+}
+
+.admin_card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  padding: 24px;
+  margin-bottom: 24px;
+  color: #4d4d4d;
+}
+
+.admin_card_title {
+  margin: 0 0 16px;
+  font-size: 18px;
+  color: #00639a;
+  border-bottom: solid 2px #cfe8f7;
+  padding-bottom: 8px;
+}
+
+.admin_login {
+  max-width: 480px;
+  margin: 60px auto;
+}
+
+.admin_input,
+.admin_text,
+.admin_textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: solid 1px #c9c9c9;
+  border-radius: 6px;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.admin_textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.admin_button {
+  margin-top: 12px;
+  padding: 10px 24px;
+  background: #00a0e6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.admin_button:hover { background: #008bc7; }
+
+.admin_button_danger { background: #e05a4f; }
+.admin_button_danger:hover { background: #c2483e; }
+
+.admin_error {
+  background: #fdecea;
+  border-left: solid 4px #e05a4f;
+  padding: 10px 12px;
+  border-radius: 4px;
+  color: #a3271d;
+  margin: 0 0 16px;
+}
+
+.admin_ok {
+  background: #e8f5e9;
+  border-left: solid 4px #4CAF50;
+  padding: 10px 12px;
+  border-radius: 4px;
+  color: #2e7d32;
+  margin: 0 0 16px;
+}
+
+.admin_note {
+  font-size: 14px;
+  line-height: 1.8;
+  margin: 8px 0;
+}
+
+.admin_pre {
+  background: #f4f4f4;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 13px;
+  overflow-x: auto;
+}
+
+.admin_note code,
+.admin_pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* --- 動画の一覧編集 --- */
+
+.admin_movie {
+  border: solid 1px #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.admin_movie_head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.admin_movie_file {
+  font-size: 13px;
+  color: #8a8a8a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  word-break: break-all;
+}
+
+.admin_movie_badge {
+  flex: none;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: #eee;
+  color: #666;
+}
+
+.admin_movie_badge.is_new { background: #fff3cd; color: #8a6d00; }
+
+.admin_field {
+  margin-bottom: 10px;
+}
+
+.admin_field label {
+  display: block;
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  color: #5d5d5d;
+}
+
+.admin_field_row {
+  display: flex;
+  gap: 12px;
+}
+
+.admin_field_row > * { flex: 1; }
+
+.admin_actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.admin_inline_form { display: inline; }

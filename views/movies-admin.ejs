@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>CHaser 試合動画の管理</title>
+  <link rel="icon" href="/images/favicon.ico">
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+  <link rel='stylesheet' href='/stylesheets/admin.css' />
+</head>
+
+<body>
+
+  <div class="header">
+    <div class="back_page">
+      <div class="back_button"><a href="/movies"></a></div>
+    </div>
+    <div class="control_area">
+      <div class="page_title">
+        <h1><span class="page_title_span">運営</span><%- title %></h1>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin_area">
+
+    <% if (message) { %><div class="admin_ok"><%= message %></div><% } %>
+    <% if (error) { %><div class="admin_error"><%= error %></div><% } %>
+
+    <div class="admin_card">
+      <h2 class="admin_card_title">動画をアップロード</h2>
+      <form method="post" action="/movies/admin/upload" enctype="multipart/form-data">
+        <div class="admin_field">
+          <label for="movie">動画ファイル (mp4 / webm / m4v、<%= maxUploadMb %>MB まで)</label>
+          <input class="admin_input" type="file" id="movie" name="movie"
+                 accept="video/mp4,video/webm,.mp4,.webm,.m4v" required>
+        </div>
+        <div class="admin_field">
+          <label for="title">タイトル</label>
+          <input class="admin_text" type="text" id="title" name="title" placeholder="2026年 決勝戦">
+        </div>
+        <div class="admin_field_row">
+          <div class="admin_field">
+            <label for="date">日付</label>
+            <input class="admin_text" type="date" id="date" name="date">
+          </div>
+        </div>
+        <div class="admin_field">
+          <label for="description">説明</label>
+          <textarea class="admin_textarea" id="description" name="description"
+                    placeholder="どこに注目してほしいかを書くと、参加者が見返しやすくなります"></textarea>
+        </div>
+        <button class="admin_button" type="submit">アップロード</button>
+      </form>
+      <p class="admin_note">
+        ファイルを直接 <code>load_data/movie_data/</code> に置いても一覧に出ます。
+        大きい動画はそちらのほうが確実です。
+      </p>
+    </div>
+
+    <div class="admin_card">
+      <h2 class="admin_card_title">公開中の動画 (<%= movies.length %>)</h2>
+
+      <% if (movies.length === 0) { %>
+        <p class="admin_note">まだ動画がありません。</p>
+      <% } else { %>
+        <form method="post" action="/movies/admin/save">
+          <% movies.forEach(function (movie, i) { %>
+            <div class="admin_movie">
+              <div class="admin_movie_head">
+                <span class="admin_movie_file"><%= movie.file %></span>
+                <% if (!movie.registered) { %>
+                  <span class="admin_movie_badge is_new">未登録 (自動検出)</span>
+                <% } %>
+              </div>
+
+              <input type="hidden" name="file" value="<%= movie.file %>">
+
+              <div class="admin_field_row">
+                <div class="admin_field">
+                  <label>タイトル</label>
+                  <input class="admin_text" type="text" name="title" value="<%= movie.title %>">
+                </div>
+                <div class="admin_field">
+                  <label>URL の id</label>
+                  <input class="admin_text" type="text" name="id" value="<%= movie.id %>">
+                </div>
+              </div>
+
+              <div class="admin_field_row">
+                <div class="admin_field">
+                  <label>日付</label>
+                  <input class="admin_text" type="date" name="date" value="<%= movie.date %>">
+                </div>
+                <div class="admin_field">
+                  <label>並び順 (小さいほど上)</label>
+                  <input class="admin_text" type="number" name="order"
+                         value="<%= movie.order === Number.MAX_SAFE_INTEGER ? i + 1 : movie.order %>">
+                </div>
+              </div>
+
+              <div class="admin_field">
+                <label>説明</label>
+                <textarea class="admin_textarea" name="description"><%= movie.description %></textarea>
+              </div>
+            </div>
+          <% }); %>
+
+          <button class="admin_button" type="submit">保存</button>
+        </form>
+
+        <h2 class="admin_card_title" style="margin-top:32px">動画を非公開にする</h2>
+        <p class="admin_note">
+          ファイルは削除されず <code>load_data/movie_data/_hidden/</code> へ移動します。
+          戻したいときは1つ上の階層へ移動し直してください。
+        </p>
+        <% movies.forEach(function (movie) { %>
+          <form class="admin_inline_form" method="post" action="/movies/admin/hide"
+                onsubmit="return confirm('「<%= movie.title %>」を非公開にします。よろしいですか？');">
+            <input type="hidden" name="id" value="<%= movie.id %>">
+            <button class="admin_button admin_button_danger" type="submit"><%= movie.title %></button>
+          </form>
+        <% }); %>
+      <% } %>
+    </div>
+
+  </div>
+
+</body>
+
+</html>
