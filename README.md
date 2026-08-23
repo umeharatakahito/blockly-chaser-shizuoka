@@ -182,6 +182,49 @@ ADMIN_KEY=好きな合言葉 PORT=3000 npm start
 
 `movies.json` から消すだけではファイルが残っているため、一覧に出続けます。
 
+## 事前練習用にインターネットへ公開する (Cloudflare Tunnel)
+
+大会本番は会場LAN内で運用しますが、事前に参加者へ動作確認をしてもらう場合は
+Cloudflare Tunnel でこのサーバーを一時的に公開できます。
+ポート開放も固定IPも不要で、WebSocket(Socket.IO)もそのまま通ります。
+
+### 手軽に試す (アカウント不要)
+
+サーバーを起動したうえで、別のターミナルで次を実行します。
+
+```bash
+cloudflared tunnel --url http://localhost:3000
+```
+
+`https://<ランダムな名前>.trycloudflare.com` という URL が表示されます。
+参加者にはこの URL を伝えてください。コマンドを止めると URL は無効になります。
+
+一時的な URL のため、毎回変わります。長期間の練習用には次の方法を使ってください。
+
+### 独自ドメインで公開する (Cloudflare アカウントが必要)
+
+```bash
+cloudflared tunnel login
+cloudflared tunnel create shizuoka-procon
+cloudflared tunnel route dns shizuoka-procon chaser.example.com
+cloudflared tunnel run --url http://localhost:3000 shizuoka-procon
+```
+
+Cloudflare Access を併用すると、許可した参加者だけにアクセスを絞れます。
+
+### 公開する前に必ず確認すること
+
+- **`ADMIN_KEY` を設定してください。** 未設定だと localhost 判定だけが働きます。
+  Tunnel 経由のアクセスは localhost として扱われないため管理画面には入れませんが、
+  運営自身も別端末から操作できなくなります。
+- 対戦ルームの合言葉は推測されにくいものにしてください。
+  合言葉が割れると第三者が試合に乱入できます。
+- 公開をやめるときは `cloudflared` を停止してください。
+
+```bash
+ADMIN_KEY=長めの合言葉 PORT=3000 npm start
+```
+
 ## 大会運営時の注意
 
 - **会場LAN内で完結させることを推奨します。** インターネットに公開すると、
