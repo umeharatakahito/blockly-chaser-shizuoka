@@ -126,7 +126,8 @@ body {
 
 .left {
   width: 260px;
-  height: 330px;
+  /* カード3枚ぶん (120px + margin-top 30px) x 3 + 下の余白 */
+  height: 480px;
   background: rgb(255, 241, 0);
   background: linear-gradient(0deg, rgba(255, 241, 0, 0.4) 0%, rgba(0, 160, 230, 0.4) 100%);
   border: solid 2px #FFF;
@@ -381,4 +382,52 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+/* 試合動画。チュートリアル(青)・対戦(赤)と区別するため緑にする */
+.menu_movies {
+  height: 120px;
+  background: #4CAF50;
+  overflow: hidden;
+  position: relative;
+  -webkit-clip-path: polygon(4px 4px, calc(100% - 4px) 4px, calc(100% - 4px) calc(90% - 4px), calc(90% - 4px) calc(100% - 4px), 4px calc(100% - 4px), 4px 4px);
+  clip-path: polygon(4px 4px, calc(100% - 4px) 4px, calc(100% - 4px) calc(90% - 4px), calc(90% - 4px) calc(100% - 4px), 4px calc(100% - 4px), 4px 4px);
+}
+
+.menu_movies a {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.menu_movies_info {
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px #5d5d5d;
+  color: #FFF;
+  margin: 4px;
+  margin-bottom: 0px;
+  background: linear-gradient(-45deg, #A5D6A7 25%, #66BB6A 25%, #66BB6A 50%, #A5D6A7 50%, #A5D6A7 75%, #66BB6A 75%, #66BB6A);
+  background-size: 40px 40px;
+  -webkit-background-size: 14px 14px;
+}
+
+.menu_movies_title {
+  color: #FFF;
+  text-shadow: 2px 2px 2px #5d5d5d;
+  padding: 10px 5px 0 5px;
+  text-align: center;
+  font-size: 30px;
+  font-weight: bold;
+}
+
+.menu_movies_title_en {
+  color: #FFF;
+  text-shadow: 2px 2px 2px #5d5d5d;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
 }

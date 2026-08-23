@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>CHaser 試合動画</title>
+  <link rel="icon" href="/images/favicon.ico">
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+  <link rel='stylesheet' href='/stylesheets/menu.css' />
+  <link rel='stylesheet' href='/stylesheets/movies.css' />
+
+  <%- include('./common/config-init') %>
+
+    <script src="/javascripts/jquery-3.4.1.min.js"></script>
+</head>
+
+<body>
+
+  <%- include('./common/config', {LNG: C_LNG}) %>
+
+    <div class="header">
+      <div class="back_page">
+        <div class="back_button"><a href="/movies"></a></div>
+      </div>
+      <div class="control_area">
+        <div class="page_title">
+          <h1><span class="page_title_span"><%- LNG["PAGE_TITLE"] %></span><%= movie ? movie.title : LNG["NOT_FOUND"] %></h1>
+        </div>
+        <div class="control_button">
+          <button id="configButton" title="<%- LNG[" CONFIG"] %>"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="movie_area">
+      <% if (!movie) { %>
+        <div class="movie_empty">
+          <p class="movie_empty_main"><%- LNG["NOT_FOUND"] %></p>
+          <p class="movie_empty_hint"><a href="/movies"><%- LNG["BACK_TO_LIST"] %></a></p>
+        </div>
+      <% } else { %>
+        <div class="movie_player">
+          <video controls preload="metadata" playsinline
+                 src="/movies/file/<%= encodeURIComponent(movie.id) %>">
+            <%- LNG["UNSUPPORTED"] %>
+          </video>
+        </div>
+        <div class="movie_meta">
+          <% if (movie.date) { %><div class="movie_meta_date"><%= movie.date %></div><% } %>
+          <% if (movie.description) { %><p class="movie_meta_desc"><%= movie.description %></p><% } %>
+          <p class="movie_meta_back"><a href="/movies"><%- LNG["BACK_TO_LIST"] %></a></p>
+        </div>
+      <% } %>
+    </div>
+
+</body>
+
+</html>

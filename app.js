@@ -18,6 +18,7 @@ var tutorialRouter = require('./routes/tutorial');
 var menuMatchRouter = require('./routes/menu-match');
 var matchRouter = require('./routes/match');
 var watchingRouter = require('./routes/watching');
+var moviesRouter = require('./routes/movies');
 
 var server_data = require('./tool/server_data_load');
 var tutorial_data = require('./tool/tutorial_data_load');
@@ -60,6 +61,7 @@ app.use('/tutorial', tutorialRouter);
 app.use('/menu-match',menuMatchRouter);
 app.use('/match', matchRouter);
 app.use('/watching',watchingRouter);
+app.use('/movies', moviesRouter);
 
 
 

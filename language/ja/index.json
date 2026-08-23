@@ -1,9 +1,11 @@
 {
-    "TUTORIAL_INFO":"まずは練習♪ 基本を学ぼう！",
-    "PROGRAMMING_INFO":"君だけの戦略を作りだそう！",
-    "WATCHIING_INFO":"友達の試合を見てみよう！",
-    "WATCHIING_TITLE":"観 戦",
-    "MATCH_INFO":"友達と試合をしてみよう！",
-    "MATCH_TITLE":"対 戦",
-    "CONFIG":"設定"
+    "TUTORIAL_INFO": "まずは練習♪ 基本を学ぼう！",
+    "PROGRAMMING_INFO": "君だけの戦略を作りだそう！",
+    "WATCHIING_INFO": "友達の試合を見てみよう！",
+    "WATCHIING_TITLE": "観 戦",
+    "MATCH_INFO": "友達と試合をしてみよう！",
+    "MATCH_TITLE": "対 戦",
+    "CONFIG": "設定",
+    "MOVIES_INFO": "過去の試合を見てみよう！",
+    "MOVIES_TITLE": "試合動画"
 }

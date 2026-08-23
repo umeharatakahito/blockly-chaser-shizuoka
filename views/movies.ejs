@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>CHaser 試合動画</title>
+  <link rel="icon" href="/images/favicon.ico">
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+  <link rel='stylesheet' href='/stylesheets/menu.css' />
+  <link rel='stylesheet' href='/stylesheets/movies.css' />
+
+  <%- include('./common/config-init') %>
+
+    <script src="/javascripts/jquery-3.4.1.min.js"></script>
+</head>
+
+<body>
+
+  <%- include('./common/config', {LNG: C_LNG}) %>
+
+    <div class="header">
+      <div class="back_page">
+        <div class="back_button"><a href="/"></a></div>
+      </div>
+      <div class="control_area">
+        <div class="page_title">
+          <h1><span class="page_title_span"><%- LNG["PAGE_TITLE"] %></span><%- LNG["LIST_HEADING"] %></h1>
+        </div>
+        <div class="control_button">
+          <button id="configButton" title="<%- LNG[" CONFIG"] %>"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="movie_area">
+      <% if (movies.length === 0) { %>
+        <div class="movie_empty">
+          <p class="movie_empty_main"><%- LNG["EMPTY"] %></p>
+          <p class="movie_empty_hint"><%- LNG["EMPTY_HINT"] %></p>
+        </div>
+      <% } else { %>
+        <ul class="movie_list">
+          <% movies.forEach(function (movie) { %>
+            <li class="movie_card">
+              <a class="movie_card_link" href="/movies/<%= encodeURIComponent(movie.id) %>">
+                <div class="movie_card_body">
+                  <div class="movie_card_title"><%= movie.title %></div>
+                  <% if (movie.date) { %>
+                    <div class="movie_card_date"><%= movie.date %></div>
+                  <% } %>
+                  <% if (movie.description) { %>
+                    <div class="movie_card_desc"><%= movie.description %></div>
+                  <% } %>
+                </div>
+                <div class="movie_card_play" aria-hidden="true">▶</div>
+              </a>
+            </li>
+          <% }); %>
+        </ul>
+      <% } %>
+    </div>
+
+</body>
+
+</html>

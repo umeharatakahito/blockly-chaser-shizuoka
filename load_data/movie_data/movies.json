@@ -1,0 +1,20 @@
+{
+  "movies": [
+    {
+      "id": "final-2025",
+      "file": "sample-final-2025.mp4",
+      "title": "2025年 決勝戦",
+      "description": "アイテム収集を優先した戦い方と、相手を追い詰める戦い方の対戦。\n終盤の判断に注目してください。",
+      "date": "2025-10-12",
+      "order": 1
+    },
+    {
+      "id": "semifinal-2025",
+      "file": "sample-semifinal-2025.mp4",
+      "title": "2025年 準決勝",
+      "description": "ブロックを使って相手の動きを制限する戦術の例。",
+      "date": "2025-10-12",
+      "order": 2
+    }
+  ]
+}
