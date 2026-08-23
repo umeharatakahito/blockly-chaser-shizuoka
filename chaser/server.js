@@ -8,6 +8,10 @@ var io = socket_io();
 
 const server_data = require('../tool/server_data_load');
 
+// 試合結果の記録。トーナメント管理画面が候補として表示するために使う。
+// recordResult() は例外を投げないので、試合進行には影響しない
+var resultLog = require('../tournament/result_log.js');
+
 //game_server_list
 var fs = require('fs');
 var path = require('path');
@@ -262,6 +266,8 @@ function player_spon(key) {
 
 
 function game_time_out(room, winer) {
+    resultLog.recordResult(room, server_store[room], winer, "タイムアウトより");
+
     io.in(room).emit("game_result", {
         "winer": winer,
         "info": "タイムアウトより"
@@ -418,6 +424,8 @@ function game_result_check(room, chara, effect_t = "r", effect_d = false, winer 
             }
         }
         if (winer) {
+            resultLog.recordResult(room, server_store[room], winer, winer_info);
+
             io.in(room).emit("game_result", {
                 "winer": winer,
                 "info": winer_info

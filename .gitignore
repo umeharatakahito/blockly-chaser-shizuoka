@@ -3,3 +3,6 @@ log/
 dist/
 # 非公開にした動画の退避先
 load_data/movie_data/_hidden/
+
+# 試合結果の自動記録ログ
+load_data/tournament/results.jsonl

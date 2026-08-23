@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "test": "node --test",
+    "test": "node --test --test-timeout=180000",
     "dist-win": "node ./bin/mode-change.js true && electron-builder --win && node ./bin/mode-change.js false",
     "dist-mac": "node ./bin/mode-change.js true && electron-builder --mac && node ./bin/mode-change.js false"
   },
@@ -85,6 +85,7 @@
   },
   "devDependencies": {
     "electron": "^33.0.2",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "socket.io-client": "^4.8.3"
   }
 }
