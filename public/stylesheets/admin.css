@@ -163,3 +163,96 @@
 }
 
 .admin_inline_form { display: inline; }
+
+/* --- 表 --- */
+
+.admin_table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.admin_table th,
+.admin_table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: solid 1px #eee;
+  vertical-align: middle;
+}
+
+.admin_table th {
+  font-size: 12px;
+  color: #8a8a8a;
+  border-bottom: solid 2px #cfe8f7;
+  white-space: nowrap;
+}
+
+.admin_nowrap { white-space: nowrap; }
+.admin_dim { color: #8a8a8a; }
+
+.admin_button_small {
+  padding: 5px 12px;
+  background: #00a0e6;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin_button_small:hover { background: #008bc7; }
+.admin_button_small.admin_button_danger { background: #e05a4f; }
+.admin_button_small.admin_button_danger:hover { background: #c2483e; }
+
+.admin_add_row,
+.admin_import_row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin_add_row .admin_text { flex: 1; }
+.admin_add_row .admin_button { margin-top: 0; white-space: nowrap; }
+.admin_import_row .admin_text { flex: 1; min-width: 160px; }
+
+.admin_link {
+  color: #00a0e6;
+  font-size: 14px;
+}
+
+/* --- 勝敗の入力 --- */
+
+.admin_round_name {
+  margin: 24px 0 8px;
+  font-size: 15px;
+  color: #5d5d5d;
+}
+
+.admin_match {
+  border: solid 1px #e0e0e0;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+
+.admin_match.is_waiting {
+  background: #fafafa;
+  color: #a0a0a0;
+}
+
+.admin_match_head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.admin_match_players {
+  font-weight: bold;
+  color: #00639a;
+}
+
+.admin_match.is_waiting .admin_match_players { color: #a0a0a0; }

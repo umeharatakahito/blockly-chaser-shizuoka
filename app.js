@@ -22,6 +22,7 @@ var moviesRouter = require('./routes/movies');
 var moviesAdminRouter = require('./routes/movies-admin');
 var adminAuth = require('./tool/admin_auth');
 var tournamentRouter = require('./routes/tournament');
+var tournamentAdminRouter = require('./routes/tournament-admin');
 
 var server_data = require('./tool/server_data_load');
 var tutorial_data = require('./tool/tutorial_data_load');
@@ -67,6 +68,7 @@ app.use('/watching',watchingRouter);
 // /movies/admin は /movies/:id に食われるため、先に登録する
 app.use('/movies/admin', moviesAdminRouter);
 app.use('/movies', moviesRouter);
+app.use('/tournament/admin', tournamentAdminRouter);
 app.use('/tournament', tournamentRouter);
 app.post('/admin/login', adminAuth.loginHandler);
 app.post('/admin/logout', adminAuth.logoutHandler);

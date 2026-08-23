@@ -249,6 +249,62 @@ function setResult(data, matchId, result) {
   return { ok: true };
 }
 
+/**
+ * 自動記録された試合結果を対戦カードへ取り込む。
+ *
+ * 記録側はゲームサーバー上の名前(cool/hot)しか持たないため、
+ * 対戦表のどちらの選手に対応するかを名前で突き合わせる。
+ * ゲーム側の cool/hot と対戦表の cool/hot が逆のこともあるので、
+ * 入れ替わりを検出してスコアも合わせて入れ替える。
+ *
+ * 名前が一致しない場合は取り込まない。誤った選手に記録するより、
+ * 運営が手で入れ直すほうが安全なため。
+ *
+ * @returns {{ok: boolean, error?: string}}
+ */
+function applyRecordedResult(data, matchId, entry) {
+  const found = findMatch(data, matchId);
+  if (!found) return { ok: false, error: 'その試合は見つかりませんでした' };
+
+  const { match } = found;
+  const coolPlayer = findPlayer(data, match.coolId);
+  const hotPlayer = findPlayer(data, match.hotId);
+  if (!coolPlayer || !hotPlayer) {
+    return { ok: false, error: '対戦者が両方とも決まっていません' };
+  }
+
+  const recCool = String(entry.coolName || '');
+  const recHot = String(entry.hotName || '');
+
+  let swapped;
+  if (coolPlayer.name === recCool && hotPlayer.name === recHot) swapped = false;
+  else if (coolPlayer.name === recHot && hotPlayer.name === recCool) swapped = true;
+  else {
+    return {
+      ok: false,
+      error: `選手名が一致しません (記録: ${recCool} と ${recHot} / 対戦表: ${coolPlayer.name} と ${hotPlayer.name})`,
+    };
+  }
+
+  // 記録側の cool/hot を、対戦表側の cool/hot に読み替える
+  const coolScore = swapped ? entry.hotScore : entry.coolScore;
+  const hotScore = swapped ? entry.coolScore : entry.hotScore;
+
+  let winnerId = null;
+  if (entry.winner === 'cool') winnerId = swapped ? hotPlayer.id : coolPlayer.id;
+  else if (entry.winner === 'hot') winnerId = swapped ? coolPlayer.id : hotPlayer.id;
+  // 引き分け(draw)は勝者を決めない。再試合するかどうかは運営が判断する
+
+  return setResult(data, matchId, {
+    winnerId,
+    coolScore,
+    hotScore,
+    note: entry.winner === 'draw' ? '引き分け' : String(entry.info || ''),
+    roomId: entry.roomId,
+    movieId: match.movieId,
+  });
+}
+
 /* -------------------------------------------------- 参加者 */
 
 /** 名簿に選手を追加する。id は使われていない番号から作る */
@@ -293,6 +349,6 @@ module.exports = {
   DATA_DIR, DATA_FILE, DEFAULT_TITLE,
   emptyTournament, load, save, normalize,
   buildBracket, applyByes, roundName, nextPowerOfTwo, seedOrder,
-  placeWinner, findMatch, setResult,
+  placeWinner, findMatch, setResult, applyRecordedResult,
   addPlayer, removePlayer, findPlayer, champion,
 };

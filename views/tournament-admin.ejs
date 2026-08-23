@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>CHaser トーナメントの管理</title>
+  <link rel="icon" href="/images/favicon.ico">
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+  <link rel='stylesheet' href='/stylesheets/admin.css' />
+</head>
+
+<body>
+
+  <div class="header">
+    <div class="back_page">
+      <div class="back_button"><a href="/tournament"></a></div>
+    </div>
+    <div class="control_area">
+      <div class="page_title">
+        <h1><span class="page_title_span">運営</span><%- title %></h1>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin_area">
+
+    <% if (message) { %><div class="admin_ok"><%= message %></div><% } %>
+    <% if (error) { %><div class="admin_error"><%= error %></div><% } %>
+
+    <!-- 大会名 -->
+    <div class="admin_card">
+      <h2 class="admin_card_title">大会名</h2>
+      <form method="post" action="/tournament/admin/title">
+        <input class="admin_text" type="text" name="title" value="<%= data.title %>">
+        <button class="admin_button" type="submit">変更</button>
+      </form>
+    </div>
+
+    <!-- 参加者 -->
+    <div class="admin_card">
+      <h2 class="admin_card_title">参加者 (<%= data.players.length %>)</h2>
+
+      <p class="admin_note">
+        並び順はシード順として扱います。上の選手ほど有利な山に入り、
+        人数が2のべき乗でない場合は上から順に不戦勝が割り当たります。
+      </p>
+
+      <% if (data.players.length === 0) { %>
+        <p class="admin_note">まだ参加者がいません。</p>
+      <% } else { %>
+        <table class="admin_table">
+          <thead>
+            <tr><th>順</th><th>名前</th><th>所属</th><th></th></tr>
+          </thead>
+          <tbody>
+            <% data.players.forEach(function (p, i) { %>
+              <tr>
+                <td><%= i + 1 %></td>
+                <td><%= p.name %></td>
+                <td><%= p.school %></td>
+                <td>
+                  <form class="admin_inline_form" method="post" action="/tournament/admin/players/remove"
+                        onsubmit="return confirm('<%= p.name %> を名簿から外します。よろしいですか？');">
+                    <input type="hidden" name="id" value="<%= p.id %>">
+                    <button class="admin_button_small admin_button_danger" type="submit">外す</button>
+                  </form>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } %>
+
+      <form class="admin_add_row" method="post" action="/tournament/admin/players/add">
+        <input class="admin_text" type="text" name="name" placeholder="名前" required>
+        <input class="admin_text" type="text" name="school" placeholder="所属(任意)">
+        <button class="admin_button" type="submit">追加</button>
+      </form>
+    </div>
+
+    <!-- 対戦表の作成 -->
+    <div class="admin_card">
+      <h2 class="admin_card_title">対戦表</h2>
+      <p class="admin_note">
+        参加者を並べ終えてから作成してください。
+        <strong>作り直すと、それまでに入力した勝敗はすべて消えます。</strong>
+      </p>
+      <div class="admin_actions">
+        <form class="admin_inline_form" method="post" action="/tournament/admin/build"
+              onsubmit="return confirm('対戦表を作成します。これまでの勝敗は消えます。よろしいですか？');">
+          <button class="admin_button" type="submit">対戦表を作る</button>
+        </form>
+        <% if (data.rounds.length) { %>
+          <form class="admin_inline_form" method="post" action="/tournament/admin/reset"
+                onsubmit="return confirm('対戦表を破棄します。よろしいですか？');">
+            <button class="admin_button admin_button_danger" type="submit">対戦表を破棄</button>
+          </form>
+        <% } %>
+        <a class="admin_link" href="/tournament" target="_blank">表示画面を開く</a>
+      </div>
+
+      <% if (champion) { %>
+        <p class="admin_ok" style="margin-top:16px">優勝: <%= champion.name %></p>
+      <% } %>
+    </div>
+
+    <!-- 勝敗の入力 -->
+    <% if (data.rounds.length) { %>
+      <div class="admin_card">
+        <h2 class="admin_card_title">勝敗の入力</h2>
+
+        <% data.rounds.forEach(function (round) { %>
+          <h3 class="admin_round_name"><%= round.name %></h3>
+
+          <% round.matches.forEach(function (m) { %>
+            <%
+              var cool = findPlayer(m.coolId);
+              var hot = findPlayer(m.hotId);
+              var ready = cool && hot;
+            %>
+            <div class="admin_match<%= ready ? '' : ' is_waiting' %>">
+              <div class="admin_match_head">
+                <span class="admin_match_players">
+                  <%= cool ? cool.name : '（勝者待ち）' %> vs <%= hot ? hot.name : '（勝者待ち）' %>
+                </span>
+                <span class="admin_movie_badge"><%= m.id %></span>
+              </div>
+
+              <% if (ready) { %>
+                <form method="post" action="/tournament/admin/result">
+                  <input type="hidden" name="matchId" value="<%= m.id %>">
+
+                  <div class="admin_field_row">
+                    <div class="admin_field">
+                      <label>勝者</label>
+                      <select class="admin_text" name="winnerId">
+                        <option value="" <%= m.winnerId ? '' : 'selected' %>>未定</option>
+                        <option value="<%= cool.id %>" <%= m.winnerId === cool.id ? 'selected' : '' %>><%= cool.name %></option>
+                        <option value="<%= hot.id %>" <%= m.winnerId === hot.id ? 'selected' : '' %>><%= hot.name %></option>
+                      </select>
+                    </div>
+                    <div class="admin_field">
+                      <label><%= cool.name %> のスコア</label>
+                      <input class="admin_text" type="number" name="coolScore" value="<%= m.coolScore === null ? '' : m.coolScore %>">
+                    </div>
+                    <div class="admin_field">
+                      <label><%= hot.name %> のスコア</label>
+                      <input class="admin_text" type="number" name="hotScore" value="<%= m.hotScore === null ? '' : m.hotScore %>">
+                    </div>
+                  </div>
+
+                  <div class="admin_field_row">
+                    <div class="admin_field">
+                      <label>備考</label>
+                      <input class="admin_text" type="text" name="note" value="<%= m.note %>" placeholder="アタックにより">
+                    </div>
+                    <div class="admin_field">
+                      <label>使用マップ</label>
+                      <input class="admin_text" type="text" name="roomId" value="<%= m.roomId %>" placeholder="room_114">
+                    </div>
+                    <div class="admin_field">
+                      <label>試合動画</label>
+                      <select class="admin_text" name="movieId">
+                        <option value="">なし</option>
+                        <% movies.forEach(function (mv) { %>
+                          <option value="<%= mv.id %>" <%= m.movieId === mv.id ? 'selected' : '' %>><%= mv.title %></option>
+                        <% }); %>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button class="admin_button" type="submit">記録する</button>
+                </form>
+              <% } else { %>
+                <p class="admin_note">前の回戦の勝者が決まると入力できます。</p>
+              <% } %>
+            </div>
+          <% }); %>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <!-- 自動記録された結果 -->
+    <div class="admin_card">
+      <h2 class="admin_card_title">サーバーが記録した試合結果 (<%= recentResults.length %>)</h2>
+      <p class="admin_note">
+        このサーバーで行われた試合の結果です。<strong>対戦表には自動で反映されません。</strong>
+        取り込む試合を選んでから「取り込む」を押してください。
+        選手名が対戦表と一致しない場合は取り込めません。
+      </p>
+
+      <% if (recentResults.length === 0) { %>
+        <p class="admin_note">まだ試合が行われていません。</p>
+      <% } else { %>
+        <table class="admin_table">
+          <thead>
+            <tr><th>時刻</th><th>マップ</th><th>対戦</th><th>結果</th><th>取り込み先</th><th></th></tr>
+          </thead>
+          <tbody>
+            <% recentResults.forEach(function (r, i) { %>
+              <tr>
+                <td class="admin_nowrap"><%= new Date(r.recordedAt).toLocaleString('ja-JP') %></td>
+                <td><%= r.roomName || r.roomId %></td>
+                <td>
+                  <%= r.coolName %> <%= r.coolScore === null ? '' : '(' + r.coolScore + ')' %>
+                  vs
+                  <%= r.hotName %> <%= r.hotScore === null ? '' : '(' + r.hotScore + ')' %>
+                </td>
+                <td>
+                  <% if (r.winner === 'draw') { %>引き分け
+                  <% } else if (r.winner === 'cool') { %><%= r.coolName %> の勝ち
+                  <% } else if (r.winner === 'hot') { %><%= r.hotName %> の勝ち
+                  <% } else { %>―<% } %>
+                  <% if (r.info) { %><span class="admin_dim">(<%= r.info %>)</span><% } %>
+                </td>
+                <td colspan="2">
+                  <% if (selectableMatches.length === 0) { %>
+                    <span class="admin_dim">対戦表がありません</span>
+                  <% } else { %>
+                    <form class="admin_import_row" method="post" action="/tournament/admin/import">
+                      <input type="hidden" name="index" value="<%= i %>">
+                      <select class="admin_text" name="matchId">
+                        <% selectableMatches.forEach(function (sm) { %>
+                          <option value="<%= sm.id %>"><%= sm.label %></option>
+                        <% }); %>
+                      </select>
+                      <button class="admin_button_small" type="submit">取り込む</button>
+                    </form>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+
+  </div>
+
+</body>
+
+</html>
