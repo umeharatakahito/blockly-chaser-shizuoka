@@ -212,6 +212,17 @@ cloudflared tunnel run --url http://localhost:3000 shizuoka-procon
 
 Cloudflare Access を併用すると、許可した参加者だけにアクセスを絞れます。
 
+### 公開したら試合できるかを確認する
+
+ページが開けても、Socket.IO の WebSocket が通らなければ試合はできません。
+参加者に URL を配る前に確認してください。
+
+```bash
+node tool/tunnel_check.js https://<発行されたURL>
+```
+
+CPU と1試合戦って決着すれば成功です。
+
 ### 公開する前に必ず確認すること
 
 - **`ADMIN_KEY` を必ず設定してください。**
