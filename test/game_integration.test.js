@@ -110,7 +110,9 @@ function playCpuMatch({ roomId, playerName, timeoutMs = 60000 }) {
 }
 
 test('CPU と1試合戦って決着がつく', async () => {
-  const before = resultLog.listRecent().length;
+  // listRecent() には既定の上限があるため、件数の増減では判定できない。
+  // 空にしてから1試合戦い、記録された中身で確かめる
+  resultLog.clear();
 
   const { result, turns } = await playCpuMatch({
     roomId: 'room_010',
@@ -123,7 +125,7 @@ test('CPU と1試合戦って決着がつく', async () => {
 
   // フックが動いて結果が記録されていること
   const after = resultLog.listRecent();
-  assert.strictEqual(after.length, before + 1, '試合結果が記録されていません');
+  assert.strictEqual(after.length, 1, '試合結果が記録されていません');
 
   const entry = after[0];
   assert.strictEqual(entry.roomId, 'room_010');
@@ -139,6 +141,7 @@ test('CPU と1試合戦って決着がつく', async () => {
 
 test('決着後にルームが再利用できる', async () => {
   // 1試合目の後始末ができていないと、2試合目が始まらない
+  resultLog.clear();
   const { result } = await playCpuMatch({ roomId: 'room_010', playerName: '2試合目' });
   assert.ok(['cool', 'hot', 'draw'].includes(result.winer));
 
