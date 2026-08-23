@@ -1,6 +1,6 @@
 {
-  "name": "BlocklyCHaser",
-  "version": "4.5.0",
+  "name": "blockly-chaser-shizuoka",
+  "version": "4.5.0+SZ",
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
@@ -20,7 +20,7 @@
   },
   "main": "electron.js",
   "build": {
-    "appId": "Blockly.CHaser",
+    "appId": "Blockly.CHaser.Shizuoka",
     "win": {
       "icon": "./icon.png",
       "target": {

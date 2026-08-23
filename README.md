@@ -1,10 +1,31 @@
-# U15一関プロコンサーバー
+# U15静岡プロコンサーバー
 Combine Google Blockly and Procon Game Server.
 
-U15一関プロコンサーバーは[U-15プログラミングコンテスト一関](https://procon-ichinoseki.com/)での使用を想定したサーバです。
-[U-15長野プログラミングコンテスト](https://www.nagano-cci.or.jp/u15procon/)用に開発されたU15長野プロコンサーバーを一関仕様に改良しました。
-ビジュアルプログラミングの一つである[blockly](https://github.com/google/blockly)を用いてプログラミング初学者が気軽にプログラミングコンテストに参加できる環境づくりを目指しています。
-ゲーム仕様は[AsahikawaProcon-Server](https://github.com/hal1437/AsahikawaProcon-Server)を参考にブラウザ上でゲームの実行が可能です。
+U15静岡プロコンサーバーは U-16プログラミングコンテスト静岡大会 での使用を想定したサーバです。
+
+ビジュアルプログラミングの一つである[blockly](https://github.com/google/blockly)を用いて、
+プログラミング初学者が気軽にプログラミングコンテストに参加できる環境づくりを目指しています。
+ゲーム仕様は[AsahikawaProcon-Server](https://github.com/hal1437/AsahikawaProcon-Server)を参考に、
+ブラウザ上でゲームの実行が可能です。
+
+## 派生元
+
+本リポジトリは以下の系譜のフォークです。
+
+U15長野プロコンサーバー
+→ [U15一関プロコンサーバー](https://github.com/U15-Ichinoseki/blockly-chaser-ichinoseki) (v4.5.0)
+→ 本リポジトリ（静岡大会仕様）
+
+参加者が練習に使用する [chaser.u15-ichinoseki.org](https://chaser.u15-ichinoseki.org/) は
+一関版 v4.5.0 が稼働しており、本リポジトリはその配信ファイルと同一の内容から分岐しています。
+そのため、参加者が練習環境で保存した `.blch` ファイルをそのまま読み込めます。
+
+上流の更新を取り込む場合:
+
+```bash
+git fetch upstream
+git merge upstream/master
+```
 
 <img width="960" alt="Screen_Shot" src="./ScreenShot.png">
 
@@ -14,7 +35,7 @@ U15一関プロコンサーバーは[U-15プログラミングコンテスト一
 	- ゲーム用ブロックの追加
 	- エラー表示
 	- プログラムの保存
-		- 保存ボタンによる手動保存(JSON圧縮形式)
+		- 保存ボタンによる手動保存(JSON圧縮形式 `.blch`)
 		- プログラム実行時の自動保存
 	- プログラムのロード
 		- 開くボタンによる任意プログラムのロード
@@ -32,55 +53,44 @@ U15一関プロコンサーバーは[U-15プログラミングコンテスト一
     - 他プレイヤー同士のゲーム観戦
 
 ## 動作環境
-### 動作確認済み環境
 - Windows 11 / macOS 14
-- Node.js 14.x
-
-### 推奨環境
-- 《Dockerfile掲載予定》
+- Node.js 18 以上を推奨（開発時の確認は Node.js 25 系）
 
 ## セットアップ
-- Step.0:Node.js,npm インストール
-- Step.1:任意の場所でGitのリポジトリをクローン
-```bash
-git clone https://github.com/U15-Ichinoseki/blockly-chaser-ichinoseki.git
-```
 
-- Step.2:ダウンロードしたフォルダに移動後、パッケージをインストール
 ```bash
-cd ./blockly-procon
+git clone <本リポジトリのURL> blockly-chaser-shizuoka
+cd blockly-chaser-shizuoka
 npm install
-```
-
-- Step.3:起動
-```bash
 npm start
 ```
 
 ## 動作確認
-- ブラウザから `http://<IPaddress>:<Port(default:3000)>/` にアクセス
+- サーバー機のブラウザから `http://localhost:3000/`
+- 参加者端末からは `http://<サーバー機のIPアドレス>:3000/`
+
+ポートは環境変数 `PORT` で変更できます。
+
+```bash
+PORT=8080 npm start
+```
+
+## 大会運営時の注意
+
+- **会場LAN内で完結させることを推奨します。** インターネットに公開すると、
+  合言葉が推測された場合に部外者が試合に乱入できます。
+- 対戦状態はすべてサーバープロセスのメモリ上に保持されます。
+  サーバーを再起動すると進行中の試合は失われます。
+- `node_modules` は同期フォルダ（Google Drive / iCloud 等）に置かないでください。
 
 ## アプリ化方法
-- Step.0:アプリケーションをビルド可能な環境であることを確認
-  - Linux環境でビルドを行う場合はwineのインストールが必要
-  - macOS版はmacOSが必要
-
-- Step.1:スクリプトの実行
 
 |OS|コマンド|
 |--|--|
 |Windows|`npm run dist-win`|
 |macOS|`npm run dist-mac`|
 
-- Step.2:フォルダー『dist』内にアプリ化されたファイルが生成される
-
-## 実装予定
-
-
-## Contributing
-[CONTRIBUTING.md](.github/CONTRIBUTING.md)
+`dist` フォルダにアプリ化されたファイルが生成されます。
 
 ## Licence
-[LICENSE](.github/LICENSE)
-
-本製作物には一部[Apache License 2.0](.github/ApacheLicense)で配布されている製作物が含まれています。
+[LICENSE](LICENSE) (MIT License / Copyright (c) 2020 kuropengin)
