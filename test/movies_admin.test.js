@@ -278,3 +278,53 @@ test('保存時に未知のキーは取り込まれない', async () => {
     store.writeMeta(before);
   }
 });
+
+/* --- リバースプロキシ越しのアクセス --- */
+
+test('プロキシ経由の 127.0.0.1 は localhost と見なさない', async () => {
+  // cloudflared は同じマシンから localhost へ転送するため、
+  // 接続元だけを見ると外部からのアクセスが 127.0.0.1 に見えてしまう。
+  // ADMIN_KEY 未設定のまま公開したときに誰でも入れることを防ぐ
+  delete process.env.ADMIN_KEY;
+
+  for (const header of ['CF-Ray', 'X-Forwarded-For', 'CF-Connecting-IP', 'X-Real-IP']) {
+    const res = await fetch(`${base}/movies/admin`, { headers: { [header]: '203.0.113.9' } });
+    assert.strictEqual(res.status, 403, `${header} が付いていても通ってしまいます`);
+  }
+});
+
+test('プロキシ経由でも正しい合言葉があれば通る', async () => {
+  process.env.ADMIN_KEY = 'テスト合言葉';
+  try {
+    const res = await fetch(`${base}/movies/admin`, {
+      headers: {
+        'CF-Ray': 'abc123',
+        Cookie: 'admin_key=' + encodeURIComponent('テスト合言葉'),
+      },
+    });
+    assert.strictEqual(res.status, 200);
+  } finally {
+    delete process.env.ADMIN_KEY;
+  }
+});
+
+test('プロキシ経由の更新操作も ADMIN_KEY なしでは拒否される', async () => {
+  delete process.env.ADMIN_KEY;
+  const formData = new FormData();
+  formData.append('movie', dummyVideo(), 'proxy.mp4');
+
+  const res = await fetch(`${base}/movies/admin/upload`, {
+    method: 'POST',
+    headers: { 'CF-Ray': 'abc123' },
+    body: formData,
+  });
+  assert.strictEqual(res.status, 403);
+});
+
+test('参加者向けページはプロキシ経由でも見られる', async () => {
+  delete process.env.ADMIN_KEY;
+  for (const p of ['/', '/movies', '/tournament']) {
+    const res = await fetch(`${base}${p}`, { headers: { 'CF-Ray': 'abc123' } });
+    assert.strictEqual(res.status, 200, `${p} が ${res.status}`);
+  }
+});

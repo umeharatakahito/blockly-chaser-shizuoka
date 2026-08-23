@@ -23,6 +23,22 @@ const COOKIE_MAX_AGE = 12 * 60 * 60 * 1000;
 
 const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
 
+/*
+ * リバースプロキシを通ったことを示すヘッダ。
+ *
+ * cloudflared や nginx は同じマシンから localhost へ転送するため、
+ * 接続元アドレスだけを見ると外部からのアクセスが 127.0.0.1 に見えてしまう。
+ * ADMIN_KEY 未設定のまま公開すると、それだけで誰でも管理画面に入れてしまう。
+ * これらのヘッダが1つでも付いていれば、localhost からの直接アクセスとは見なさない。
+ */
+const PROXY_HEADERS = [
+  'x-forwarded-for',
+  'x-real-ip',
+  'forwarded',
+  'cf-connecting-ip',
+  'cf-ray',
+];
+
 const adminKey = () => process.env.ADMIN_KEY || '';
 const isAdminKeySet = () => adminKey().length > 0;
 
@@ -38,10 +54,21 @@ function safeEquals(a, b) {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
-/** リクエスト元が localhost か */
+/** リクエストがリバースプロキシを経由してきたか */
+function viaProxy(req) {
+  if (typeof req.get !== 'function') return false;
+  return PROXY_HEADERS.some((h) => Boolean(req.get(h)));
+}
+
+/**
+ * サーバー機からの直接アクセスか。
+ *
+ * 接続元が 127.0.0.1 でも、プロキシ経由を示すヘッダが付いていれば外部と見なす。
+ * これがないと Cloudflare Tunnel 越しのアクセスがすべて localhost 扱いになる。
+ */
 function isLoopback(req) {
   const ip = (req.ip || req.connection?.remoteAddress || '').trim();
-  return LOOPBACK.has(ip);
+  return LOOPBACK.has(ip) && !viaProxy(req);
 }
 
 /** リクエストから合言葉を取り出す。Cookie / フォーム / ヘッダの順に見る */
@@ -75,7 +102,7 @@ function requireAdmin(req, res, next) {
       ok: false,
       error: isAdminKeySet()
         ? '合言葉が違います'
-        : 'ADMIN_KEY が未設定のため、localhost からのみ操作できます',
+        : 'ADMIN_KEY が未設定のため、サーバー機のブラウザからのみ操作できます',
     });
   }
 
@@ -122,6 +149,6 @@ function logoutHandler(req, res) {
 }
 
 module.exports = {
-  COOKIE_NAME, requireAdmin, isAdmin, isAdminKeySet, isLoopback,
+  COOKIE_NAME, PROXY_HEADERS, requireAdmin, isAdmin, isAdminKeySet, isLoopback, viaProxy,
   loginHandler, logoutHandler, safeEquals,
 };
