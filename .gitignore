@@ -6,3 +6,7 @@ load_data/movie_data/_hidden/
 
 # 試合結果の自動記録ログ
 load_data/tournament/results.jsonl
+
+# 対戦表。大会ごとの実データなのでリポジトリでは持たない
+# (ファイルが無い場合は空の対戦表として起動する)
+load_data/tournament/tournament.json
