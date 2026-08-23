@@ -9,6 +9,8 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const http = require('node:http');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const { io: ioClient } = require('socket.io-client');
 
@@ -147,4 +149,99 @@ test('決着後にルームが再利用できる', async () => {
 
   const entry = resultLog.listRecent()[0];
   assert.ok(entry.coolName === '2試合目' || entry.hotName === '2試合目');
+});
+
+/* --- セルの意味の回帰テスト --- */
+
+/**
+ * マップ JSON の内部表現から、サーバーがクライアントへ送る9マスの値を計算する。
+ *
+ * 内部: 0=床 1=ブロック 2=アイテム 3=cool 4=hot
+ * 送信: 0=床/自分 1=相手 2=ブロック 3=アイテム   (盤外はブロック扱い)
+ *
+ * 変換は chaser/server.js の get_ready() に合わせている。
+ */
+function expectedNineCells(map, cx, cy) {
+  const out = [];
+  for (const dy of [-1, 0, 1]) {
+    for (const dx of [-1, 0, 1]) {
+      const x = cx + dx;
+      const y = cy + dy;
+      if (x < 0 || x >= map.map_size_x || y < 0 || y >= map.map_size_y) {
+        out.push(2);
+        continue;
+      }
+      const v = map.map_data[y][x];
+      if (v === 3) out.push(0);         // 自分
+      else if (v === 4) out.push(1);    // 相手
+      else if (v === 0) out.push(0);    // 床
+      else if (v === 1) out.push(2);    // ブロック
+      else out.push(3);                 // アイテム
+    }
+  }
+  return out;
+}
+
+/** ルームに入り、最初に届いた周囲9マスを返して切断する */
+function firstSurroundings({ roomId, playerName, timeoutMs = 30000 }) {
+  return new Promise((resolve, reject) => {
+    const socket = ioClient(`http://127.0.0.1:${port}`, { transports: ['websocket'] });
+    let poller = null;
+    let done = false;
+
+    const finish = (fn) => {
+      if (done) return;
+      done = true;
+      clearInterval(poller);
+      socket.close();
+      fn();
+    };
+
+    const timer = setTimeout(() => finish(() => reject(new Error('9マスが届きませんでした'))), timeoutMs);
+
+    socket.on('connect', () => {
+      socket.emit('player_join', { room_id: roomId, name: playerName });
+      poller = setInterval(() => socket.emit('get_ready'), 100);
+    });
+
+    socket.on('get_ready_rec', (msg) => {
+      const cells = msg && msg.rec_data;
+      if (!Array.isArray(cells) || cells.length < 9) return;
+      clearTimeout(timer);
+      finish(() => resolve(cells));
+    });
+
+    socket.on('connect_error', (e) => finish(() => reject(e)));
+  });
+}
+
+test('サーバーが送る9マスの値がマップ定義と一致する', async () => {
+  // セル値 1 と 2 は直感と逆(1=ブロック, 2=アイテム)なので、
+  // 取り違えるとマップの難易度も連結性の検査も静かに壊れる。
+  // 実際の通信内容と突き合わせて固定する。
+  const mapPath = path.join(__dirname, '..', 'load_data', 'game_server_data', 'game_server_010.json');
+  const map = JSON.parse(fs.readFileSync(mapPath, 'utf8'));
+
+  const cells = await firstSurroundings({ roomId: 'room_010', playerName: '9マス確認' });
+  const expected = expectedNineCells(map, map.cool.x, map.cool.y);
+
+  assert.deepStrictEqual(cells.slice(0, 9), expected,
+    `マップ定義から期待される値と一致しません。\n`
+    + `  マップ: ${map.name} cool=(${map.cool.x}, ${map.cool.y})\n`
+    + `  期待  : ${expected.join(',')}\n`
+    + `  実際  : ${cells.slice(0, 9).join(',')}`);
+});
+
+test('マップ定義とサーバーでブロックとアイテムの向きが揃っている', () => {
+  // 静岡決勝マップは「ブロックが多く長期戦」という設計。
+  // 値を取り違えるとアイテムだらけの別物になる
+  const mapPath = path.join(__dirname, '..', 'load_data', 'game_server_data', 'game_server_014.json');
+  const map = JSON.parse(fs.readFileSync(mapPath, 'utf8'));
+
+  const flat = map.map_data.flat();
+  const blocks = flat.filter((v) => v === 1).length;
+  const items = flat.filter((v) => v === 2).length;
+
+  assert.ok(blocks > items,
+    `決勝マップはブロックのほうが多いはず (ブロック${blocks} / アイテム${items})`);
 });

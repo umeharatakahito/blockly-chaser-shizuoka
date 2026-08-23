@@ -5,7 +5,12 @@
  * テストから常時呼び、マップを差し替えたら必ず検査が走るようにしている。
  *
  * セルの数値体系 (chaser/server.js と同じ):
- *   0 = 床, 1 = アイテム, 2 = ブロック, 3 = cool, 4 = hot
+ *   0 = 床, 1 = ブロック, 2 = アイテム, 3 = cool, 4 = hot
+ *
+ * 1 と 2 は直感と逆なので注意。chaser/server.js で確認できる。
+ *   - create_map(): auto_block が 1 を、auto_point が 2 を書き込む
+ *   - move_player(): 値 2 のマスへ入るとスコアが増える(アイテム)
+ *   - game_result_check(): 四方が 1 に囲まれると「ブロック閉じ込め」で負け
  *
  * マップには3種類ある。検査項目は種類によって異なる。
  *   procedural   : map_data が空。auto_block / auto_point から起動時に生成される
@@ -17,8 +22,8 @@ const fs = require('fs');
 const path = require('path');
 
 const FLOOR = 0;
-const ITEM = 1;
-const BLOCK = 2;
+const BLOCK = 1;
+const ITEM = 2;
 const COOL = 3;
 const HOT = 4;
 const CELL_VALUES = [FLOOR, ITEM, BLOCK, COOL, HOT];
@@ -270,7 +275,7 @@ function validateAll(dir = MAP_DIR) {
 
 module.exports = {
   validateMap, validateAll, checkConnectivity, findCells, mapKind,
-  MAP_DIR, FLOOR, ITEM, BLOCK, COOL, HOT,
+  MAP_DIR, FLOOR, BLOCK, ITEM, COOL, HOT,
 };
 
 if (require.main === module) {
