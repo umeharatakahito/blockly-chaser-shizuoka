@@ -188,18 +188,32 @@ ADMIN_KEY=好きな合言葉 PORT=3000 npm start
 Cloudflare Tunnel でこのサーバーを一時的に公開できます。
 ポート開放も固定IPも不要で、WebSocket(Socket.IO)もそのまま通ります。
 
-### 手軽に試す (アカウント不要)
+### 手軽に試す (アカウント不要・完全無料)
 
-サーバーを起動したうえで、別のターミナルで次を実行します。
+サーバーの起動とトンネルの作成をまとめて行うスクリプトがあります。
 
 ```bash
-cloudflared tunnel --url http://localhost:3000
+./tool/serve_public.sh
 ```
 
-`https://<ランダムな名前>.trycloudflare.com` という URL が表示されます。
-参加者にはこの URL を伝えてください。コマンドを止めると URL は無効になります。
+公開URL・LAN内のURL・運営用の合言葉がまとめて表示されます。
+`Ctrl+C` で両方止まり、URL は無効になります。
 
-一時的な URL のため、毎回変わります。長期間の練習用には次の方法を使ってください。
+合言葉を固定したい場合は環境変数で渡します。
+
+```bash
+ADMIN_KEY=好きな合言葉 ./tool/serve_public.sh
+```
+
+手動で行う場合は、サーバーを起動したうえで別のターミナルで次を実行します。
+
+```bash
+cloudflared tunnel --url http://localhost:3100
+```
+
+いずれも `https://<ランダムな名前>.trycloudflare.com` という一時URLになります。
+**起動のたびに URL が変わり、Mac がスリープすると切れます。**
+長期間の練習用には次の方法を使ってください。
 
 ### 独自ドメインで公開する (Cloudflare アカウントが必要)
 
