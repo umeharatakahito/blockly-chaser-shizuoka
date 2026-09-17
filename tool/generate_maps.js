@@ -1,5 +1,10 @@
 /**
- * 大会用マップを生成する。
+ * 大会用マップをシードから生成する。
+ *
+ * 【2026-09 以降】静岡大会のマップは DO 版(blockly-chaser-shizuoka-do)で設計図から作り、
+ * tool/import_shizuoka_maps.js でこちらへ取り込む運用に変えた。
+ * このスクリプトで書き出すと取り込んだマップを上書きしてしまうので、書き出しには --force が要る。
+ * 生成ロジック自体は別大会向けの雛形として残してある。
  *
  * 手で盤面を書くと対称性の崩れや到達不能な開始位置が混入しやすいため、
  * パラメータとシードから決定的に生成する。同じシードからは常に同じ盤面が出る。
@@ -220,6 +225,12 @@ module.exports = { mulberry32, shuffle, buildBoard, generateMap, formatMapJson, 
 
 if (require.main === module) {
   const dryRun = process.argv.includes('--dry');
+  const force = process.argv.includes('--force');
+  if (!dryRun && !force) {
+    console.error('静岡大会のマップは tool/import_shizuoka_maps.js で DO 版から取り込みます。');
+    console.error('このスクリプトで上書きするなら --force を、結果を見るだけなら --dry を付けてください。');
+    process.exit(1);
+  }
   const files = buildAll();
 
   for (const { fileName, map, meta } of files) {

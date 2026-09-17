@@ -233,7 +233,7 @@ test('サーバーが送る9マスの値がマップ定義と一致する', asyn
 });
 
 test('マップ定義とサーバーでブロックとアイテムの向きが揃っている', () => {
-  // 静岡決勝マップは「ブロックが多く長期戦」という設計。
+  // 静岡決勝マップ(逆さ富士)は山の稜線がブロックなので、アイテムよりブロックが多い。
   // 値を取り違えるとアイテムだらけの別物になる
   const mapPath = path.join(__dirname, '..', 'load_data', 'game_server_data', 'game_server_014.json');
   const map = JSON.parse(fs.readFileSync(mapPath, 'utf8'));

@@ -261,6 +261,22 @@ ADMIN_KEY=長めの合言葉 PORT=3000 npm start
   サーバーを再起動すると進行中の試合は失われます。
 - `node_modules` は同期フォルダ（Google Drive / iCloud 等）に置かないでください。
 
+## 静岡大会のマップ
+
+大会マップ(room_010〜014 / 110〜114)の原本は DO 版
+[blockly-chaser-shizuoka-do](https://github.com/umeharatakahito/blockly-chaser-shizuoka-do) にあります。
+設計図(`tool/shizuoka_maps.mjs`)から作って公開サイトへデプロイし、こちらへは取り込むだけです。
+
+```bash
+node tool/import_shizuoka_maps.js          # 公開サイトの /api/game から取り込む
+node tool/import_shizuoka_maps.js --dry    # 何が変わるかだけ見る
+node tool/import_shizuoka_maps.js ../blockly-chaser-shizuoka-do/src/data/maps.json   # 手元の DO 版から
+```
+
+取り込んだあとは `npm test` で検証してください。`load_data` の静岡マップが取り込み結果とずれていると
+テストが落ちるので、DO 版だけ直して Node 版を忘れる事故を防げます。
+`tool/generate_maps.js`(シードからの自動生成)は別大会向けの雛形として残してあり、書き出しには `--force` が要ります。
+
 ## テスト
 
 ```bash
