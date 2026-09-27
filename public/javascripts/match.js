@@ -39,6 +39,11 @@ if (query_list.room_id) {
                 
                 var server_init = {};
                 server_init.room_id = query_list.room_id + "?" + query_list.room_token;
+                // 予選: 本家の CPU の代わりにボット(L1〜L30)と戦う
+                if (query_list.bot) {
+                    server_init.bot = Number(query_list.bot);
+                    server_init.bot_seed = Number(query_list.seed);
+                }
                 socket.emit("match_init", server_init);
             }
             else {
@@ -54,8 +59,13 @@ var check_flag = true;
 
 socket.on("match_init_rec", function (msg) {
     if (!msg.error) {
-        document.getElementById('cool_player_iframe').src = "/match/player?room_id=" + query_list.room_id + "&room_token=" + query_list.room_token + "&chara=cool&key=" + msg.key;
-        document.getElementById('hot_player_iframe').src = "/match/player?room_id=" + query_list.room_id + "&room_token=" + query_list.room_token + "&chara=hot&key=" + msg.key;
+        // 運営画面から開いたときは、参加者のプログラムを自動で読み込ませる
+        var prog_cool = query_list.prog_cool ? "&prog=" + query_list.prog_cool : "";
+        var prog_hot = query_list.prog_hot ? "&prog=" + query_list.prog_hot : "";
+        // 予選はボットが後攻に入る。CPU の枠に「ボット L5」と出す
+        if (query_list.bot) prog_hot += "&bot=" + query_list.bot;
+        document.getElementById('cool_player_iframe').src = "/match/player?room_id=" + query_list.room_id + "&room_token=" + query_list.room_token + "&chara=cool&key=" + msg.key + prog_cool;
+        document.getElementById('hot_player_iframe').src = "/match/player?room_id=" + query_list.room_id + "&room_token=" + query_list.room_token + "&chara=hot&key=" + msg.key + prog_hot;
         key = msg.key;
         document.getElementById("game_start").onclick = function () {
 
@@ -70,7 +80,8 @@ socket.on("match_init_rec", function (msg) {
     }
     else {
         window.alert("接続先サーバーは使用中です");
-        window.location.href = "/menu-match";
+        var back_to = query_list.back ? decodeURIComponent(query_list.back) : "";
+        window.location.href = /^\/[^\/]/.test(back_to) ? back_to : "/menu-match";
     }
 });
 
@@ -182,11 +193,17 @@ function game_result_display(winer, info) {
     back_button_link.classList.add("button_link");
     back_button_link.href = "/menu-match";
     back_button_link.innerText = "戻る";
+    // 運営画面から開いた対戦は、結果が記録された運営画面へ戻す(同じサイト内のパスだけ受け付ける)
+    var back_to = query_list.back ? decodeURIComponent(query_list.back) : "";
+    if (/^\/[^\/]/.test(back_to)) {
+        back_button_link.href = back_to;
+        back_button_link.innerText = "運営画面へ";
+    }
     back_button.appendChild(back_button_link);
 
     var re_button_link = document.createElement('a');
     re_button_link.classList.add("button_link");
-    re_button_link.href = "/match?room_id=" + query_list.room_id + "&room_token=" + query_list.room_token;
+    re_button_link.href = "/match" + location.search;
     re_button_link.innerText = "もう一度";
     re_button.appendChild(re_button_link);
 

@@ -23,6 +23,8 @@ var moviesAdminRouter = require('./routes/movies-admin');
 var adminAuth = require('./tool/admin_auth');
 var tournamentRouter = require('./routes/tournament');
 var tournamentAdminRouter = require('./routes/tournament-admin');
+var contestRouter = require('./routes/contest');
+var contestAdminRouter = require('./routes/contest-admin');
 
 var server_data = require('./tool/server_data_load');
 var tutorial_data = require('./tool/tutorial_data_load');
@@ -30,6 +32,8 @@ var bgm_data = require('./tool/bgm_data_load');
 var config_load = require('./tool/config_data_load');
 
 var chaser = require('./chaser/server.js');
+// 試合が終わったら予選・トーナメントの記録へ書き込む(合言葉で見分ける)
+require('./contest/recorder.js').install();
 
 var app = express();
 
@@ -70,6 +74,8 @@ app.use('/movies/admin', moviesAdminRouter);
 app.use('/movies', moviesRouter);
 app.use('/tournament/admin', tournamentAdminRouter);
 app.use('/tournament', tournamentRouter);
+app.use('/contest/admin', contestAdminRouter);
+app.use('/contest', contestRouter);
 app.post('/admin/login', adminAuth.loginHandler);
 app.post('/admin/logout', adminAuth.logoutHandler);
 

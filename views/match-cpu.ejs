@@ -10,7 +10,12 @@
 </head>
 
 <body>
-  <h1>CPU</h1>
+  <h1 id="cpu_name">CPU</h1>
+  <script>
+    // 予選(運営画面から開いた対ボット戦)では、本家の CPU ではなくボットが入る
+    var bot = /[?&]bot=(\d+)/.exec(location.search);
+    if (bot) document.getElementById('cpu_name').textContent = 'ボット L' + bot[1];
+  </script>
 </body>
 
 </html>

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>CHaser 大会当日の運営</title>
+  <link rel="icon" href="/images/favicon.ico">
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+  <link rel='stylesheet' href='/stylesheets/admin.css' />
+  <style>
+    .admin_area { max-width: 1100px; }
+    .c_steps { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 20px; }
+    .c_steps a { background: #fff; border-radius: 16px; padding: 6px 14px; color: #00639a; text-decoration: none; font-size: 14px; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+    .c_badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #eee; color: #666; white-space: nowrap; }
+    .c_badge.win { background: #e8f5e9; color: #2e7d32; }
+    .c_badge.lose { background: #fdecea; color: #a3271d; }
+    .c_badge.draw { background: #fff3cd; color: #8a6d00; }
+    .c_badge.local { background: #e3f2fd; color: #1565c0; }
+    .c_badge.adv { background: #00a0e6; color: #fff; }
+    .c_play { display: inline-block; padding: 6px 14px; background: #4CAF50; color: #fff; border-radius: 4px; text-decoration: none; font-size: 13px; font-weight: bold; white-space: nowrap; }
+    .c_play:hover { background: #3d8b40; }
+    .c_play.again { background: #9e9e9e; }
+    .c_score { font-size: 18px; font-weight: bold; color: #00639a; }
+    .c_row_cut td { border-bottom: solid 3px #00a0e6; }
+    .c_match { border: solid 1px #e0e0e0; border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; }
+    .c_match.done { background: #f7fbf7; }
+    .c_match_head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+    .c_match_players { font-size: 16px; font-weight: bold; }
+    .c_decision { margin-top: 8px; font-size: 14px; }
+    .c_form_row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+    .c_form_row .admin_text { width: auto; flex: 1; min-width: 140px; }
+    .c_form_row select, .c_form_row input[type=number] { padding: 6px 8px; font-size: 14px; }
+    .c_form_row .admin_button { margin-top: 0; }
+    .c_details summary { cursor: pointer; font-size: 13px; color: #00639a; }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <div class="back_page">
+      <div class="back_button"><a href="/"></a></div>
+    </div>
+    <div class="control_area">
+      <div class="page_title">
+        <h1><span class="page_title_span">運営</span><%- title %></h1>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin_area">
+
+    <div class="c_steps">
+      <a href="#participants">1. 参加者とプログラム</a>
+      <a href="#qualifier">2. 予選（対ボット）</a>
+      <a href="#tournament">3. 決勝トーナメント</a>
+      <a href="/contest/qualifier" target="_blank">予選の順位表（投影用）</a>
+      <a href="/tournament" target="_blank">対戦表（投影用）</a>
+      <a href="/tournament/admin">対戦表の手直し</a>
+    </div>
+
+    <% if (message) { %><div class="admin_ok"><%= message %></div><% } %>
+    <% if (error) { %><div class="admin_error"><%= error %></div><% } %>
+
+    <!-- 1. 参加者 -->
+    <div class="admin_card" id="participants">
+      <h2 class="admin_card_title">1. 参加者とプログラム（<%= people.participants.length %> 人）</h2>
+
+      <form method="post" action="/contest/admin/import" class="c_form_row">
+        <input class="admin_text" type="url" name="url" value="<%= doUrl %>" title="DO 版の URL">
+        <input class="admin_text" type="password" name="key" placeholder="DO 版の運営の鍵" required autocomplete="off" style="max-width: 220px;">
+        <button class="admin_button" type="submit">DO 版から取り込む</button>
+      </form>
+      <p class="admin_note">
+        公開サイトのエントリーと提出プログラムをまとめて持ってきます。何度押しても大丈夫です。
+        新しい提出があれば差し替え、会場で差し替えたプログラム（<span class="c_badge local">会場</span>）はそのまま残します。
+        <% if (people.importedAt) { %><br>前回の取り込み: <%= new Date(people.importedAt).toLocaleString('ja-JP') %><% } %>
+      </p>
+
+      <% if (people.participants.length === 0) { %>
+        <p class="admin_note">まだ参加者がいません。上のボタンで取り込むか、下で手で足してください。</p>
+      <% } else { %>
+        <table class="admin_table">
+          <thead><tr><th>#</th><th>名前</th><th>所属</th><th>プログラム</th><th>差し替え</th><th></th></tr></thead>
+          <tbody>
+            <% people.participants.forEach(function (p, i) { %>
+              <tr>
+                <td><%= i + 1 %></td>
+                <td><%= p.name %></td>
+                <td class="admin_dim"><%= p.school %></td>
+                <td>
+                  <% if (p.program) { %>
+                    <a class="admin_link" href="/contest/admin/program/<%= p.id %>"><%= p.program.name %></a>
+                    <% if (p.program.source === 'local') { %><span class="c_badge local">会場</span><% } %>
+                    <div class="admin_dim" style="font-size: 12px;"><%= p.program.uploadedAt ? new Date(p.program.uploadedAt).toLocaleString('ja-JP') : '' %></div>
+                  <% } else { %>
+                    <span class="c_badge lose">未提出</span>
+                  <% } %>
+                </td>
+                <td>
+                  <form method="post" action="/contest/admin/participants/program" enctype="multipart/form-data" class="admin_inline_form">
+                    <input type="hidden" name="id" value="<%= p.id %>">
+                    <input type="file" name="file" accept=".blch,.zip,.json,.xml" required style="width: 180px; font-size: 12px;">
+                    <button class="admin_button_small" type="submit">差し替え</button>
+                  </form>
+                </td>
+                <td>
+                  <form class="admin_inline_form" method="post" action="/contest/admin/participants/remove"
+                        onsubmit="return confirm('<%= p.name %> を参加者から外します。よろしいですか？');">
+                    <input type="hidden" name="id" value="<%= p.id %>">
+                    <button class="admin_button_small admin_button_danger" type="submit">外す</button>
+                  </form>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } %>
+
+      <form method="post" action="/contest/admin/participants/add" enctype="multipart/form-data" class="c_form_row">
+        <input class="admin_text" type="text" name="name" placeholder="名前（当日受付など）" required>
+        <input class="admin_text" type="text" name="school" placeholder="所属（任意）">
+        <input type="file" name="file" accept=".blch,.zip,.json,.xml" style="font-size: 13px;">
+        <button class="admin_button" type="submit">参加者を足す</button>
+      </form>
+    </div>
+
+    <!-- 2. 予選 -->
+    <div class="admin_card" id="qualifier">
+      <h2 class="admin_card_title">2. 予選（対ボット）　<%= playedCount %> / <%= qualifierRows.filter(function (r) { return r.participant.program; }).length %> 人 終了</h2>
+
+      <form method="post" action="/contest/admin/qualifier/config" class="c_form_row">
+        <label>マップ
+          <select name="roomId">
+            <% rooms.filter(function (r) { return r.cpu; }).forEach(function (r) { %>
+              <option value="<%= r.id %>" <%= r.id === config.roomId ? 'selected' : '' %>><%= r.name %>（<%= r.turn %>ターン）</option>
+            <% }); %>
+          </select>
+        </label>
+        <label>ボット L<input type="number" name="botLevel" min="1" max="30" value="<%= config.botLevel %>" style="width: 60px;"></label>
+        <label>乱数<input type="number" name="seed" value="<%= config.seed %>" style="width: 110px;"></label>
+        <label>進出<input type="number" name="advance" min="2" max="64" value="<%= config.advance %>" style="width: 60px;">人</label>
+        <button class="admin_button" type="submit">保存</button>
+      </form>
+      <p class="admin_note">
+        参加者が先攻（cool）、ボットが後攻（hot）で1回対戦します。「対戦」を押すと対戦画面にプログラムが読み込まれるので、
+        「ゲームスタート」を押してください。終わると自動でここに記録されます（やり直すと最後の対戦で置き換わります）。<br>
+        得点は 勝ち: アイテム×3＋残りターン ／ 負け: アイテム×3−残りターン ／ 引き分け: アイテム×3。
+        ボットの乱数を固定しているので、全員が同じ目のボットと戦います。
+      </p>
+      <% if (tieAtCut) { %>
+        <div class="admin_error">進出ライン（<%= config.advance %> 位）に同点がいます。決め方を運営で判断してください。</div>
+      <% } %>
+
+      <table class="admin_table">
+        <thead><tr><th>順位</th><th>名前</th><th>結果</th><th>アイテム</th><th>残り</th><th>得点</th><th></th></tr></thead>
+        <tbody>
+          <% qualifierRows.forEach(function (row, i) { var p = row.participant; var r = row.run; %>
+            <tr class="<%= r && row.rank !== null && i === config.advance - 1 ? 'c_row_cut' : '' %>">
+              <td class="admin_nowrap">
+                <% if (row.rank !== null) { %><%= row.rank %> 位<% if (i < config.advance) { %> <span class="c_badge adv">進出</span><% } %><% } else { %><span class="admin_dim">―</span><% } %>
+              </td>
+              <td><%= p.name %><div class="admin_dim" style="font-size: 12px;"><%= p.school %></div></td>
+              <td>
+                <% if (r) { %>
+                  <span class="c_badge <%= r.outcome %>"><%= r.outcome === 'win' ? '勝ち' : r.outcome === 'lose' ? '負け' : '引き分け' %></span>
+                  <span class="admin_dim" style="font-size: 12px;"><%= r.info %></span>
+                  <% if (row.tries > 1) { %>
+                    <details class="c_details"><summary><%= row.tries %> 回戦いました（最後を採用）</summary>
+                      <% row.runs.forEach(function (x, k) { %>
+                        <div class="admin_dim" style="font-size: 12px;"><%= k + 1 %>回目: <%= x.outcome === 'win' ? '勝ち' : x.outcome === 'lose' ? '負け' : '引き分け' %>・<%= x.info %>・アイテム<%= x.items %>・残り<%= x.turnsLeft %> → <%= x.score %>点</div>
+                      <% }); %>
+                    </details>
+                  <% } %>
+                <% } %>
+              </td>
+              <td><%= r ? r.items : '' %></td>
+              <td><%= r ? r.turnsLeft : '' %></td>
+              <td class="c_score"><%= r ? r.score : '' %></td>
+              <td class="admin_nowrap">
+                <% if (!p.program) { %>
+                  <span class="c_badge lose">プログラムなし</span>
+                <% } else { %>
+                  <a class="c_play <%= r ? 'again' : '' %>" href="<%= row.playUrl %>"><%= r ? 'やり直す' : '対戦' %></a>
+                  <% if (r) { %>
+                    <form class="admin_inline_form" method="post" action="/contest/admin/qualifier/remove-run"
+                          onsubmit="return confirm('<%= p.name %> の最後の記録を消します。よろしいですか？');">
+                      <input type="hidden" name="id" value="<%= p.id %>">
+                      <input type="hidden" name="index" value="<%= row.tries - 1 %>">
+                      <button class="admin_button_small admin_button_danger" type="submit">記録を消す</button>
+                    </form>
+                  <% } %>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+
+      <form method="post" action="/contest/admin/tournament/build"
+            onsubmit="return confirm('予選の上位 <%= config.advance %> 人で決勝トーナメントを作り直します。<%= hasTournament ? '今の対戦表と結果は消えます。' : '' %>よろしいですか？');">
+        <button class="admin_button" type="submit">予選の上位 <%= config.advance %> 人で決勝トーナメントを作る</button>
+      </form>
+      <p class="admin_note">順位の順にシードを付けます。人数が2のべき乗でないときは、上位から順に不戦勝になります。</p>
+    </div>
+
+    <!-- 3. 決勝トーナメント -->
+    <div class="admin_card" id="tournament">
+      <h2 class="admin_card_title">3. 決勝トーナメント</h2>
+
+      <% if (!hasTournament) { %>
+        <p class="admin_note">まだ対戦表がありません。予選が終わったら上のボタンで作ってください。</p>
+      <% } else { %>
+        <p class="admin_note">
+          1試合は同じマップで先攻・後攻を入れ替えて2回対戦します。勝利数が多い方の勝ち。同じならアイテム数の合計
+          （Put された回は 0、自滅した回は 0−残りターン）で決め、それも同じなら「再試合」でマップを変えてもう2回行います。
+          結果は自動で記録されます。勝者が決まったら「勝者を確定」を押すと次の回戦へ進みます。
+        </p>
+
+        <% rounds.forEach(function (round) { %>
+          <h3 class="admin_round_name" style="margin-top: 20px;"><%= round.name %></h3>
+          <form method="post" action="/contest/admin/tournament/round-room" class="c_form_row">
+            <input type="hidden" name="round" value="<%= round.index %>">
+            <label>マップ
+              <select name="roomId">
+                <% rooms.filter(function (r) { return !r.cpu; }).forEach(function (r) { %>
+                  <option value="<%= r.id %>" <%= r.id === round.roomId ? 'selected' : '' %>><%= r.name %>（<%= r.turn %>ターン）</option>
+                <% }); %>
+              </select>
+            </label>
+            <button class="admin_button_small" type="submit">変更</button>
+          </form>
+
+          <% round.matches.forEach(function (m) { %>
+            <div class="c_match <%= m.winner ? 'done' : '' %>" id="<%= m.id %>">
+              <div class="c_match_head">
+                <div class="c_match_players">
+                  <%= m.cool ? m.cool.name : '（勝者待ち）' %> 対 <%= m.hot ? m.hot.name : '（勝者待ち）' %>
+                </div>
+                <div>
+                  <% if (m.winner) { %><span class="c_badge win">勝者 <%= m.winner.name %></span> <span class="admin_dim" style="font-size: 12px;"><%= m.note %></span><% } %>
+                </div>
+              </div>
+
+              <% if (m.ready) { %>
+                <table class="admin_table" style="margin-bottom: 4px;">
+                  <thead><tr><th>回</th><th>先攻（cool）</th><th>後攻（hot）</th><th>マップ</th><th>結果</th><th></th></tr></thead>
+                  <tbody>
+                    <% m.plan.forEach(function (g) { var r = g.result; %>
+                      <tr>
+                        <td><%= g.no %><% if (g.set > 1) { %> <span class="c_badge draw">再試合</span><% } %></td>
+                        <td><%= g.coolName %><% if (r) { %> <span class="admin_dim">(<%= r.coolItems %>)</span><% } %></td>
+                        <td><%= g.hotName %><% if (r) { %> <span class="admin_dim">(<%= r.hotItems %>)</span><% } %></td>
+                        <td class="admin_dim" style="font-size: 12px;"><%= g.roomName %></td>
+                        <td>
+                          <% if (r) { %>
+                            <span class="c_badge <%= r.winner === 'draw' ? 'draw' : 'win' %>"><%= r.winner === 'cool' ? g.coolName + ' の勝ち' : r.winner === 'hot' ? g.hotName + ' の勝ち' : '引き分け' %></span>
+                            <span class="admin_dim" style="font-size: 12px;"><%= r.info %>・残り<%= r.turnsLeft %></span>
+                          <% } %>
+                        </td>
+                        <td class="admin_nowrap">
+                          <% if (!m.winner && g.missing.length) { %>
+                            <span class="c_badge lose" title="参加者の一覧でプログラムを入れてください"><%= g.missing.join('・') %> のプログラムなし</span>
+                          <% } else if (!m.winner) { %>
+                            <a class="c_play <%= r ? 'again' : '' %>" href="<%= g.playUrl %>"><%= r ? 'やり直す' : '対戦' %></a>
+                          <% } %>
+                          <% if (r && !m.winner) { %>
+                            <form class="admin_inline_form" method="post" action="/contest/admin/tournament/clear-game"
+                                  onsubmit="return confirm('<%= g.no %> 回目の記録を消します。よろしいですか？');">
+                              <input type="hidden" name="matchId" value="<%= m.id %>">
+                              <input type="hidden" name="no" value="<%= g.no %>">
+                              <button class="admin_button_small admin_button_danger" type="submit">消す</button>
+                            </form>
+                          <% } %>
+                        </td>
+                      </tr>
+                    <% }); %>
+                  </tbody>
+                </table>
+
+                <% var d = m.decision; %>
+                <div class="c_decision">
+                  <% if (d.status === 'pending') { %>
+                    <span class="admin_dim">対戦中（<%= d.set %> 組目）</span>
+                  <% } else if (d.status === 'decided') { %>
+                    <strong><%= (d.winnerId === m.cool.id ? m.cool : m.hot).name %> の勝ち</strong>（<%= d.reason %>）
+                    <% if (!m.winner || m.winner.id !== d.winnerId) { %>
+                      <form class="admin_inline_form" method="post" action="/contest/admin/tournament/confirm">
+                        <input type="hidden" name="matchId" value="<%= m.id %>">
+                        <button class="admin_button_small" type="submit">勝者を確定</button>
+                      </form>
+                    <% } %>
+                  <% } else { %>
+                    <span class="c_badge draw">決着つかず</span> 勝利数もアイテム数も同じです（<%= m.cool.name %> <%= d.items[m.cool.id] %>・<%= m.hot.name %> <%= d.items[m.hot.id] %>）。マップを変えて再試合してください。
+                    <form method="post" action="/contest/admin/tournament/replay" class="c_form_row">
+                      <input type="hidden" name="matchId" value="<%= m.id %>">
+                      <select name="roomId">
+                        <% rooms.filter(function (r) { return !r.cpu; }).forEach(function (r) { %>
+                          <option value="<%= r.id %>" <%= r.id === 'room_110' ? 'selected' : '' %>><%= r.name %></option>
+                        <% }); %>
+                      </select>
+                      <button class="admin_button_small" type="submit">再試合を足す</button>
+                    </form>
+                  <% } %>
+                </div>
+              <% } else if (m.note) { %>
+                <div class="admin_dim"><%= m.note %></div>
+              <% } %>
+            </div>
+          <% }); %>
+        <% }); %>
+      <% } %>
+    </div>
+
+  </div>
+</body>
+
+</html>

@@ -36,145 +36,132 @@
 
   <script src="/javascripts/fflate.js"></script>
   <script>
-    document.getElementById("xml_input").addEventListener('change', function (e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      Code.stopJS();
-      
-      const fileName = file.name.toLowerCase();
-      const reader = new FileReader();
-      
-      // XMLファイルとして読み込む場合
-      if (fileName.endsWith(".xml")) {
-        reader.onload = function (e) {
-          const xmlText = e.target.result.toString();
-          try {
-            var xml = Blockly.utils.xml.textToDom(xmlText);
-            for (var xml_one of xml.getElementsByTagName("block")) {
-              if (xml_one.getAttribute("type") === "server_join") {
-                if (query_list.room_id) {
-                  let hasRoomToken = false;
-
-                  for (var field of xml_one.getElementsByTagName("field")) {
-                    if (field.getAttribute("name") === "room_id") {
-                      field.textContent = query_list.room_id;
-                    }
-                    if (field.getAttribute("name") === "room_token") {
-                      field.textContent = query_list.room_token;
-                      hasRoomToken = true;
-                    }
-                  }
-                  // room_token が存在しなかった場合、新規作成
-                  if (!hasRoomToken) {
-                    const newField = xml_one.ownerDocument.createElement("field");
-                    newField.setAttribute("name", "room_token");
-                    newField.textContent = query_list.room_token;
-                    xml_one.appendChild(newField);
-                  }
-                }
-
-              }
-            }
-          } catch (e) {
-            alert(e);
-            return;
-          }
-          Code.workspace.clear();
-          Blockly.Xml.domToWorkspace(xml, Code.workspace);
-
-          Code.runJS();
-        };
-        reader.readAsText(file);
+    /** 読み込んだプログラムの対戦先を、この対戦のルームに書き換える */
+    function overrideJoinFields(blockArray) {
+      if (!Array.isArray(blockArray)) {
+        console.warn("ブロック配列が見つかりませんでした");
+        return;
       }
-      // ZIP圧縮JSONとして読み込む場合（.blch や .zip）
-      else if (fileName.endsWith(".json")) {
-        reader.onload = function (e) {
-          const jsonText = e.target.result.toString();
-          let workspaceData;
+      for (const block of blockArray) {
+        if (block.type === "server_join" && query_list.room_id) {
+          block.fields = block.fields || {};
+          block.fields.room_id = query_list.room_id;
+          block.fields.room_token = query_list.room_token;
+        }
+      }
+    }
 
-          try {
-            workspaceData = JSON.parse(jsonText);
+    /**
+     * プログラムを読み込んで実行する。
+     * .xml / .json はテキスト、.blch / .zip は program.json を含む ZIP として扱う。
+     * @param {string} fileName 拡張子で形式を決める
+     * @param {ArrayBuffer} buffer
+     */
+    function loadProgramData(fileName, buffer) {
+      Code.stopJS();
+      const lower = String(fileName || "").toLowerCase();
 
-            const blockArray =
-              workspaceData?.blocks?.blocks || workspaceData?.blocks || [];
-
-            if (Array.isArray(blockArray)) {
-              for (const block of blockArray) {
-                if (block.type === "server_join" && query_list.room_id) {
-                  block.fields.room_id = query_list.room_id;
-                  block.fields.room_token = query_list.room_token;
+      // XMLファイルとして読み込む場合
+      if (lower.endsWith(".xml")) {
+        const xmlText = new TextDecoder("utf-8").decode(buffer);
+        var xml;
+        try {
+          xml = Blockly.utils.xml.textToDom(xmlText);
+          for (var xml_one of xml.getElementsByTagName("block")) {
+            if (xml_one.getAttribute("type") === "server_join" && query_list.room_id) {
+              let hasRoomToken = false;
+              for (var field of xml_one.getElementsByTagName("field")) {
+                if (field.getAttribute("name") === "room_id") field.textContent = query_list.room_id;
+                if (field.getAttribute("name") === "room_token") {
+                  field.textContent = query_list.room_token;
+                  hasRoomToken = true;
                 }
               }
-            } else {
-              console.warn("ブロック配列が見つかりませんでした");
+              // room_token が存在しなかった場合、新規作成
+              if (!hasRoomToken) {
+                const newField = xml_one.ownerDocument.createElement("field");
+                newField.setAttribute("name", "room_token");
+                newField.textContent = query_list.room_token;
+                xml_one.appendChild(newField);
+              }
             }
-          } catch (err) {
-            alert("JSONファイルの読み込みまたは解析に失敗しました");
-            console.error(err);
-            return;
           }
+        } catch (e) {
+          alert(e);
+          return;
+        }
+        Code.workspace.clear();
+        Blockly.Xml.domToWorkspace(xml, Code.workspace);
+        Code.runJS();
+        return;
+      }
 
-          // Blockly に反映して実行
-          Code.workspace.clear();
-          Blockly.serialization.workspaces.load(workspaceData, Code.workspace);
-
-          Code.runJS();
-        };
-        reader.readAsText(file);
+      let jsonText;
+      if (lower.endsWith(".json")) {
+        jsonText = new TextDecoder("utf-8").decode(buffer);
       }
       // ZIP圧縮JSONとして読み込む場合（.blch や .zip）
       else {
-        reader.onload = function (e) {
-          var jsonText
-          try {
-            const arrayBuffer = e.target.result;
-            const uint8 = new Uint8Array(arrayBuffer); 
-            const unzipped = fflate.unzipSync(uint8);
-
-            if (!unzipped["program.json"]) {
-              alert("program.json が ZIP 内に見つかりませんでした");
-              return;
-            }
-
-            jsonText = new TextDecoder("utf-8").decode(unzipped["program.json"]);
-          } catch (err) {
-            alert("ZIPファイルの展開に失敗しました");
-            console.error(err);
-          }
-
-          let workspaceData;
-          try {
-            workspaceData = JSON.parse(jsonText);
-
-            const blockArray =
-              workspaceData?.blocks?.blocks || workspaceData?.blocks || [];
-
-            if (Array.isArray(blockArray)) {
-              for (const block of blockArray) {
-                if (block.type === "server_join" && query_list.room_id) {
-                  block.fields.room_id = query_list.room_id;
-                  block.fields.room_token = query_list.room_token;
-                }
-              }
-            } else {
-              console.warn("ブロック配列が見つかりませんでした");
-            }
-          } catch (err) {
-            alert("JSONファイルの読み込みまたは解析に失敗しました");
-            console.error(err);
+        try {
+          const unzipped = fflate.unzipSync(new Uint8Array(buffer));
+          if (!unzipped["program.json"]) {
+            alert("program.json が ZIP 内に見つかりませんでした");
             return;
           }
-
-          // Blockly に反映して実行
-          Code.workspace.clear();
-          Blockly.serialization.workspaces.load(workspaceData, Code.workspace);
-
-          Code.runJS();
-        };
-        reader.readAsArrayBuffer(file);
+          jsonText = new TextDecoder("utf-8").decode(unzipped["program.json"]);
+        } catch (err) {
+          alert("ZIPファイルの展開に失敗しました");
+          console.error(err);
+          return;
+        }
       }
+
+      let workspaceData;
+      try {
+        workspaceData = JSON.parse(jsonText);
+        overrideJoinFields(workspaceData?.blocks?.blocks || workspaceData?.blocks || []);
+      } catch (err) {
+        alert("JSONファイルの読み込みまたは解析に失敗しました");
+        console.error(err);
+        return;
+      }
+
+      // Blockly に反映して実行
+      Code.workspace.clear();
+      Blockly.serialization.workspaces.load(workspaceData, Code.workspace);
+      Code.runJS();
+    }
+
+    document.getElementById("xml_input").addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (ev) { loadProgramData(file.name, ev.target.result); };
+      reader.readAsArrayBuffer(file);
     });
+
+    /*
+     * 運営画面(/contest/admin)から開いたときは、参加者のプログラムを自動で読み込む。
+     * 選手名はプログラムに書かれた名前ではなく、エントリーした名前を使う(encode_match.js の join で差し替える)。
+     */
+    function loadContestProgram() {
+      if (!Code.workspace) { setTimeout(loadContestProgram, 100); return; }
+      var fileName = "program.blch";
+      fetch("/contest/admin/program/" + encodeURIComponent(decodeURIComponent(query_list.prog)), { cache: "no-store" })
+        .then(function (res) {
+          if (!res.ok) throw new Error("プログラムを読めません (" + res.status + ")");
+          fileName = decodeURIComponent(res.headers.get("X-Program-Name") || fileName);
+          window.PLAYER_NAME = decodeURIComponent(res.headers.get("X-Player-Name") || "");
+          return res.arrayBuffer();
+        })
+        .then(function (buffer) {
+          document.getElementById("uv").style.display = "inline-block";
+          document.getElementById("uv").value = window.PLAYER_NAME + " : " + fileName;
+          loadProgramData(fileName, buffer);
+        })
+        .catch(function (e) { alert(e.message); });
+    }
+    if (query_list.prog) window.addEventListener("load", loadContestProgram);
 
     document.getElementById("releaseButton").onclick = function () {
       Code.stopJS();

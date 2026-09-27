@@ -12,6 +12,9 @@ const server_data = require('../tool/server_data_load');
 // recordResult() は例外を投げないので、試合進行には影響しない
 var resultLog = require('../tournament/result_log.js');
 
+// ボット対戦の思考(DO 版と同一の L1〜L30)。予選で参加者と戦わせる
+var botPlayer = require('./bot_player.js');
+
 //game_server_list
 var fs = require('fs');
 var path = require('path');
@@ -1264,6 +1267,14 @@ io.on('connection', function (socket) {
                         server_store[msg.room_id][server_store[msg.room_id].cpu.turn].getready = true;
                         server_store[msg.room_id][server_store[msg.room_id].cpu.turn].score = 0;
                         server_store[msg.room_id][server_store[msg.room_id].cpu.turn].name = "cpu";
+
+                        // 予選: 本家の CPU の代わりにボット(L1〜L30)を指す。合言葉つきの使い捨てルームだけで受け付ける
+                        if (msg.bot && String(msg.room_id).includes("?")) {
+                            var botLevel = botPlayer.clampLevel(msg.bot);
+                            server_store[msg.room_id].cpu.bot = botLevel;
+                            server_store[msg.room_id].cpu.seed = msg.bot_seed;
+                            server_store[msg.room_id][server_store[msg.room_id].cpu.turn].name = "ボット L" + botLevel;
+                        }
                     }
                 }
                 else {
@@ -1605,6 +1616,10 @@ function cpu(room, level, chara) {
     var cpu_map_date = get_ready(room, chara);
     const delay_time = 100;
 
+    if (cpu_map_date && server_store[room].cpu && server_store[room].cpu.bot && bot_turn(room, chara, delay_time)) {
+        return;
+    }
+
     if (cpu_map_date) {
         //levelの変数の型が文字列の場合は数値に変換
         if (typeof level == "string") {
@@ -1669,6 +1684,25 @@ function cpu(room, level, chara) {
             setTimeout(look, delay_time, room, chara, "top");
         }
     }
+}
+
+// ボット(L1〜L30)に1手指させる。思考を読み込めていなければ false を返し、本家の CPU に任せる
+function bot_turn(room, chara, delay_time) {
+    if (!(room in room_info) || !room_info[room]) room_info[room] = {};
+    if (!room_info[room].bot) {
+        room_info[room].bot = botPlayer.createBrain(server_store[room], server_store[room].cpu.bot, server_store[room].cpu.seed);
+    }
+    var brain = room_info[room].bot;
+    if (!brain) return false;
+
+    var next = botPlayer.decide(server_store[room], chara, brain);
+    var act = { move_player: move_player, put_wall: put_wall, look: look, search: search }[next.action];
+    setTimeout(function () {
+        if (!server_store[room]) return;
+        act(room, chara, next.direction);
+        if (server_store[room]) botPlayer.after(server_store[room], chara, brain, next.kind, next.direction);
+    }, delay_time);
+    return true;
 }
 
 //与えられた周辺情報を元に、CPUの行動を決定する

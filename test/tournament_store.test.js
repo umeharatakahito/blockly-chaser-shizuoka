@@ -214,10 +214,11 @@ test('未知のキーは normalize で落ちる', () => {
 
   assert.strictEqual(clean.evil, undefined);
   assert.deepStrictEqual(Object.keys(clean.players[0]).sort(), ['id', 'name', 'school']);
-  assert.deepStrictEqual(Object.keys(clean.rounds[0]).sort(), ['matches', 'name']);
+  // roomId は回戦のマップ。games / sets / replayRooms は2回1組の対戦記録(contest/rules.js)
+  assert.deepStrictEqual(Object.keys(clean.rounds[0]).sort(), ['matches', 'name', 'roomId']);
   assert.deepStrictEqual(
     Object.keys(clean.rounds[0].matches[0]).sort(),
-    ['coolId', 'coolScore', 'hotId', 'hotScore', 'id', 'movieId', 'note', 'roomId', 'winnerId']
+    ['coolId', 'coolScore', 'games', 'hotId', 'hotScore', 'id', 'movieId', 'note', 'replayRooms', 'roomId', 'sets', 'winnerId']
   );
 });
 

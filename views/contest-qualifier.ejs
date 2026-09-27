@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>CHaser 予選の順位</title>
+  <link rel="icon" href="/images/favicon.ico">
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+  <!-- 会場のスクリーンに映したままにするので、10秒ごとに読み直す -->
+  <meta http-equiv="refresh" content="10">
+  <style>
+    .q_area { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+    .q_title { text-align: center; color: #00639a; font-size: 28px; margin: 8px 0 4px; }
+    .q_sub { text-align: center; color: #4d4d4d; font-size: 16px; margin: 0 0 20px; }
+    .q_table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.2); font-size: 22px; color: #3d3d3d; }
+    .q_table th { background: #00639a; color: #fff; font-size: 16px; padding: 10px 14px; text-align: left; }
+    .q_table td { padding: 10px 14px; border-bottom: solid 1px #eee; }
+    .q_table tr.adv td { background: #eef8fe; }
+    .q_table tr.cut td { border-bottom: solid 4px #00a0e6; }
+    .q_rank { font-weight: bold; width: 80px; white-space: nowrap; }
+    .q_name small { display: block; font-size: 14px; color: #8a8a8a; }
+    .q_score { font-weight: bold; color: #00639a; font-size: 28px; text-align: right; }
+    .q_num { text-align: right; white-space: nowrap; }
+    .q_badge { display: inline-block; font-size: 15px; padding: 3px 10px; border-radius: 12px; white-space: nowrap; }
+    .q_badge.win { background: #e8f5e9; color: #2e7d32; }
+    .q_badge.lose { background: #fdecea; color: #a3271d; }
+    .q_badge.draw { background: #fff3cd; color: #8a6d00; }
+    .q_badge.adv { background: #00a0e6; color: #fff; }
+    .q_wait { color: #aaa; }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <div class="back_page">
+      <div class="back_button"><a href="/tournament"></a></div>
+    </div>
+    <div class="control_area">
+      <div class="page_title">
+        <h1><span class="page_title_span">予選</span>対ボット戦の順位</h1>
+      </div>
+    </div>
+  </div>
+
+  <div class="q_area">
+    <h2 class="q_title"><%= title %></h2>
+    <p class="q_sub">上位 <%= advance %> 人が決勝トーナメントへ進みます　／　勝ち: アイテム×3＋残りターン　負け: アイテム×3−残りターン</p>
+
+    <table class="q_table">
+      <thead>
+        <tr><th>順位</th><th>名前</th><th>結果</th><th class="q_num">アイテム</th><th class="q_num">残りターン</th><th class="q_num">得点</th></tr>
+      </thead>
+      <tbody>
+        <% rows.forEach(function (row, i) { var r = row.run; var adv = r && i < advance; %>
+          <tr class="<%= adv ? 'adv' : '' %> <%= r && i === advance - 1 ? 'cut' : '' %>">
+            <td class="q_rank"><%= row.rank !== null ? row.rank + ' 位' : '' %></td>
+            <td class="q_name"><%= row.participant.name %><small><%= row.participant.school %></small></td>
+            <td>
+              <% if (r) { %>
+                <span class="q_badge <%= r.outcome %>"><%= r.outcome === 'win' ? '勝ち' : r.outcome === 'lose' ? '負け' : '引き分け' %></span>
+                <% if (adv) { %><span class="q_badge adv">進出</span><% } %>
+              <% } else { %>
+                <span class="q_wait">これから</span>
+              <% } %>
+            </td>
+            <td class="q_num"><%= r ? r.items : '' %></td>
+            <td class="q_num"><%= r ? r.turnsLeft : '' %></td>
+            <td class="q_score"><%= r ? r.score : '' %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</body>
+
+</html>

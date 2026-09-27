@@ -103,6 +103,9 @@ function initApi(interpreter, scope) {
     id = id ? id.toString() : '';
     name = name ? name.toString() : '';
 
+    // 大会の対戦では、エントリーした名前で戦う(運営画面から開いたときだけ設定される)
+    if (window.PLAYER_NAME) name = window.PLAYER_NAME;
+
     var user = {};
     user.room_id = id;
     user.name = name;

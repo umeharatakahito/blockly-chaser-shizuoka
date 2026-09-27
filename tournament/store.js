@@ -18,6 +18,29 @@ const DATA_FILE = path.join(DATA_DIR, 'tournament.json');
 
 const DEFAULT_TITLE = 'U-16プログラミングコンテスト静岡大会';
 
+// 回戦ごとの既定のマップと、試合の決め方(2回1組・アイテム数・再試合)は contest/rules.js にある
+const { defaultRoundRoom } = require('../contest/rules.js');
+
+const ROOM_ID = /^room_\d{3}$/;
+const toRoom = (v) => (ROOM_ID.test(String(v || '').trim()) ? String(v).trim() : '');
+const toInt = (v) => (Number.isFinite(Number(v)) ? Math.round(Number(v)) : 0);
+
+/** 1回の対戦の記録。contest/recorder.js が試合の終わりに書き込む */
+function normalizeGame(g) {
+  return {
+    no: Math.max(1, toInt(g.no)),
+    coolId: g.coolId ? String(g.coolId) : null,
+    hotId: g.hotId ? String(g.hotId) : null,
+    roomId: toRoom(g.roomId),
+    winner: g.winner === 'cool' || g.winner === 'hot' || g.winner === 'draw' ? g.winner : null,
+    info: String(g.info || ''),
+    coolItems: toInt(g.coolItems),
+    hotItems: toInt(g.hotItems),
+    turnsLeft: toInt(g.turnsLeft),
+    recordedAt: String(g.recordedAt || ''),
+  };
+}
+
 /** 空のトーナメント */
 function emptyTournament() {
   return { title: DEFAULT_TITLE, players: [], rounds: [] };
@@ -65,6 +88,7 @@ function normalize(data) {
 
   const rounds = (Array.isArray(src.rounds) ? src.rounds : []).map((round, ri) => ({
     name: String((round && round.name) || `${ri + 1}回戦`),
+    roomId: toRoom(round && round.roomId) || defaultRoundRoom(String((round && round.name) || '')),
     matches: (Array.isArray(round && round.matches) ? round.matches : []).map((m, mi) => ({
       id: String((m && m.id) || `r${ri + 1}m${mi + 1}`),
       coolId: m && m.coolId ? String(m.coolId) : null,
@@ -75,6 +99,9 @@ function normalize(data) {
       note: String((m && m.note) || '').trim(),
       roomId: String((m && m.roomId) || '').trim(),
       movieId: String((m && m.movieId) || '').trim(),
+      games: (Array.isArray(m && m.games) ? m.games : []).filter((g) => g && typeof g === 'object').map(normalizeGame),
+      sets: Math.max(1, toInt(m && m.sets) || 1),
+      replayRooms: (Array.isArray(m && m.replayRooms) ? m.replayRooms : []).map(toRoom).filter(Boolean),
     })),
   }));
 
@@ -159,9 +186,13 @@ function buildBracket(data) {
         note: '',
         roomId: '',
         movieId: '',
+        games: [],
+        sets: 1,
+        replayRooms: [],
       });
     }
-    rounds.push({ name: roundName(ri, totalRounds), matches });
+    const name = roundName(ri, totalRounds);
+    rounds.push({ name, roomId: defaultRoundRoom(name), matches });
   }
 
   const built = Object.assign({}, data, { rounds });
@@ -305,6 +336,52 @@ function applyRecordedResult(data, matchId, entry) {
   });
 }
 
+/* -------------------------------------------------- 2回1組の対戦 */
+
+/**
+ * 1回の対戦の結果を試合に書き込む。同じ番号の記録があれば置き換える(やり直し)。
+ * 勝者の確定はしない。運営が「勝者を確定」を押して初めて次の回戦へ進む。
+ */
+function recordGame(data, matchId, game) {
+  const found = findMatch(data, matchId);
+  if (!found) return { ok: false, error: 'その試合は見つかりませんでした' };
+  const g = normalizeGame(game);
+  const games = found.match.games || (found.match.games = []);
+  const i = games.findIndex((x) => x.no === g.no);
+  if (i >= 0) games[i] = g; else games.push(g);
+  games.sort((a, b) => a.no - b.no);
+  return { ok: true, match: found.match, round: data.rounds[found.roundIndex] };
+}
+
+/** 1回の対戦の記録を消す */
+function clearGame(data, matchId, no) {
+  const found = findMatch(data, matchId);
+  if (!found) return { ok: false, error: 'その試合は見つかりませんでした' };
+  found.match.games = (found.match.games || []).filter((g) => g.no !== Number(no));
+  return { ok: true };
+}
+
+/** 決着がつかなかったとき、マップを変えてもう1組(2回)足す */
+function addReplaySet(data, matchId, roomId) {
+  const found = findMatch(data, matchId);
+  if (!found) return { ok: false, error: 'その試合は見つかりませんでした' };
+  const m = found.match;
+  m.sets = (m.sets || 1) + 1;
+  m.replayRooms = (m.replayRooms || []).slice(0, m.sets - 2);
+  m.replayRooms.push(toRoom(roomId) || 'room_110');
+  return { ok: true };
+}
+
+/** 回戦のマップを変える */
+function setRoundRoom(data, roundIndex, roomId) {
+  const round = data.rounds[roundIndex];
+  if (!round) return { ok: false, error: 'その回戦は見つかりませんでした' };
+  const room = toRoom(roomId);
+  if (!room) return { ok: false, error: 'マップの指定が正しくありません' };
+  round.roomId = room;
+  return { ok: true };
+}
+
 /* -------------------------------------------------- 参加者 */
 
 /** 名簿に選手を追加する。id は使われていない番号から作る */
@@ -350,5 +427,6 @@ module.exports = {
   emptyTournament, load, save, normalize,
   buildBracket, applyByes, roundName, nextPowerOfTwo, seedOrder,
   placeWinner, findMatch, setResult, applyRecordedResult,
+  recordGame, clearGame, addReplaySet, setRoundRoom, normalizeGame,
   addPlayer, removePlayer, findPlayer, champion,
 };

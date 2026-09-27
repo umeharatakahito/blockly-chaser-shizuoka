@@ -35,7 +35,17 @@ function buildEntry(roomId, room, winner, info, now) {
     hotScore: Number.isFinite(hot.score) ? hot.score : null,
     winner: winner === 'cool' || winner === 'hot' || winner === 'draw' ? winner : null,
     info: String(info || ''),
+    // 残りターン数。予選の得点(アイテム×3 ± 残りターン)と、自滅の扱いに使う
+    turnsLeft: Number.isFinite(room && room.turn) ? room.turn : null,
   };
+}
+
+/* 結果を受け取りたいモジュール(予選・トーナメントの自動記録)。server.js を触らずに済むようここで配る */
+const listeners = [];
+
+/** 試合が終わるたびに fn(entry) を呼ぶ。fn の失敗は試合進行に影響させない */
+function onResult(fn) {
+  if (typeof fn === 'function') listeners.push(fn);
 }
 
 /**
@@ -59,6 +69,14 @@ function recordResult(roomId, room, winner, info) {
       fs.appendFileSync(LOG_FILE, JSON.stringify(entry) + '\n', 'utf8');
     } catch (e) {
       console.error('試合結果をファイルに書けません: ' + e.message);
+    }
+
+    for (const fn of listeners) {
+      try {
+        fn(entry);
+      } catch (e) {
+        console.error('試合結果の受け取りに失敗しました: ' + (e && e.message));
+      }
     }
 
     return entry;
@@ -98,4 +116,4 @@ function clear() {
   recent.length = 0;
 }
 
-module.exports = { DATA_DIR, LOG_FILE, MAX_IN_MEMORY, recordResult, listRecent, restore, clear, buildEntry };
+module.exports = { DATA_DIR, LOG_FILE, MAX_IN_MEMORY, recordResult, listRecent, restore, clear, buildEntry, onResult };
