@@ -160,3 +160,30 @@ test('chaser/server.js のフックが 2 箇所とも入っている', () => {
   assert.strictEqual(calls.length, 2, '記録の呼び出しは2箇所のはず');
   assert.match(src, /require\('\.\.\/tournament\/result_log\.js'\)/);
 });
+
+test('記録の選手名を直せる。元の名前は残り、ファイルにも書き戻される', () => {
+  const fs = require('node:fs');
+  const log = require('../tournament/result_log.js');
+  const backup = fs.existsSync(log.LOG_FILE) ? fs.readFileSync(log.LOG_FILE, 'utf8') : null;
+  try {
+    log.clear();
+    const entry = log.recordResult('room_110?x', { name: '練習', cool: { name: 'NoName', score: 3 }, hot: { name: '💩', score: 1 }, turn: 0 }, 'cool', 'スコアより');
+
+    assert.strictEqual(log.renameRecent(0, 'ちがう時刻', 'あおい', 'はると'), null, '時刻が合わなければ直さない');
+    const fixed = log.renameRecent(0, entry.recordedAt, 'あおい', 'はると');
+    assert.strictEqual(fixed.coolName, 'あおい');
+    assert.strictEqual(fixed.originalCoolName, 'NoName');
+    assert.strictEqual(fixed.originalHotName, '💩');
+
+    // 再起動したつもりでファイルから読み戻す
+    log.clear();
+    log.restore();
+    const again = log.listRecent(1)[0];
+    assert.strictEqual(again.coolName, 'あおい');
+    assert.strictEqual(again.hotName, 'はると');
+  } finally {
+    if (backup === null) fs.rmSync(log.LOG_FILE, { force: true });
+    else fs.writeFileSync(log.LOG_FILE, backup, 'utf8');
+    log.clear();
+  }
+});

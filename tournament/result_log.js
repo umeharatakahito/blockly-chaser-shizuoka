@@ -111,9 +111,52 @@ function restore() {
   return recent.length;
 }
 
+/**
+ * 記録の選手名を直す。プログラムに書かれた名前(NoName など)のまま記録された試合を、
+ * 対戦表の選手名にそろえて取り込めるようにするため。
+ *
+ * 画面の並び順(index)と記録時刻の両方が合うものだけを直す。
+ * 画面を開いたあとに新しい試合が記録されると並び順がずれるので、時刻で本人確認する。
+ * results.jsonl の該当行も書き換え、再起動しても直した名前が残るようにする。
+ *
+ * @returns {Object|null} 直した記録。見つからなければ null
+ */
+function renameRecent(index, recordedAt, coolName, hotName) {
+  const entry = recent[index];
+  if (!entry || entry.recordedAt !== String(recordedAt || '')) return null;
+  const clean = (v) => String(v || '').replace(/[\r\n\t]/g, ' ').trim().slice(0, 40);
+  if (!clean(coolName) || !clean(hotName)) return null;
+
+  const before = { roomId: entry.roomId, recordedAt: entry.recordedAt };
+  if (!entry.originalCoolName) entry.originalCoolName = entry.coolName;
+  if (!entry.originalHotName) entry.originalHotName = entry.hotName;
+  entry.coolName = clean(coolName);
+  entry.hotName = clean(hotName);
+
+  try {
+    const lines = fs.readFileSync(LOG_FILE, 'utf8').split('\n');
+    for (let i = lines.length - 1; i >= 0; i--) {
+      if (!lines[i]) continue;
+      let e;
+      try { e = JSON.parse(lines[i]); } catch (err) { continue; }
+      if (e.recordedAt === before.recordedAt && e.roomId === before.roomId) {
+        lines[i] = JSON.stringify(entry);
+        const tmp = LOG_FILE + '.tmp';
+        fs.writeFileSync(tmp, lines.join('\n'), 'utf8');
+        fs.renameSync(tmp, LOG_FILE);
+        break;
+      }
+    }
+  } catch (e) {
+    // ファイルが無くてもメモリ上は直っている。取り込みはできる
+    if (e.code !== 'ENOENT') console.error('results.jsonl を書き換えられません: ' + e.message);
+  }
+  return entry;
+}
+
 /** テスト用。メモリ上の記録を空にする */
 function clear() {
   recent.length = 0;
 }
 
-module.exports = { DATA_DIR, LOG_FILE, MAX_IN_MEMORY, recordResult, listRecent, restore, clear, buildEntry, onResult };
+module.exports = { DATA_DIR, LOG_FILE, MAX_IN_MEMORY, recordResult, listRecent, restore, clear, buildEntry, onResult, renameRecent };

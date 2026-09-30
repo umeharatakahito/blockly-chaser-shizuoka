@@ -192,6 +192,11 @@
       <% if (recentResults.length === 0) { %>
         <p class="admin_note">まだ試合が行われていません。</p>
       <% } else { %>
+        <!-- 名前を直すときの候補。対戦表の選手名 -->
+        <datalist id="player_names">
+          <% data.players.forEach(function (p) { %><option value="<%= p.name %>"><% }); %>
+        </datalist>
+        <p class="admin_note">取り込みは選手名で対戦表と突き合わせます。プログラムに書かれた名前（NoName など）のままの記録は、「名前を直す」で対戦表の選手名にそろえてから取り込んでください。</p>
         <table class="admin_table">
           <thead>
             <tr><th>時刻</th><th>マップ</th><th>対戦</th><th>結果</th><th>取り込み先</th><th></th></tr>
@@ -205,6 +210,19 @@
                   <%= r.coolName %> <%= r.coolScore === null ? '' : '(' + r.coolScore + ')' %>
                   vs
                   <%= r.hotName %> <%= r.hotScore === null ? '' : '(' + r.hotScore + ')' %>
+                  <% if (r.originalCoolName || r.originalHotName) { %>
+                    <div class="admin_dim">元の名前: <%= r.originalCoolName || r.coolName %> vs <%= r.originalHotName || r.hotName %></div>
+                  <% } %>
+                  <details>
+                    <summary class="admin_link" style="cursor: pointer; font-size: 13px;">名前を直す</summary>
+                    <form class="admin_import_row" method="post" action="/tournament/admin/results/rename">
+                      <input type="hidden" name="index" value="<%= i %>">
+                      <input type="hidden" name="recordedAt" value="<%= r.recordedAt %>">
+                      <input class="admin_text" type="text" name="coolName" value="<%= r.coolName %>" list="player_names" title="cool(先攻)" required>
+                      <input class="admin_text" type="text" name="hotName" value="<%= r.hotName %>" list="player_names" title="hot(後攻)" required>
+                      <button class="admin_button_small" type="submit">保存</button>
+                    </form>
+                  </details>
                 </td>
                 <td>
                   <% if (r.winner === 'draw') { %>引き分け

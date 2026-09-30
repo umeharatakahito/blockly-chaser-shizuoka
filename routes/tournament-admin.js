@@ -8,6 +8,7 @@
  *   POST /tournament/admin/build           対戦表の作成
  *   POST /tournament/admin/result          勝敗の手入力
  *   POST /tournament/admin/import          自動記録された結果の取り込み
+ *   POST /tournament/admin/results/rename  自動記録された結果の選手名を直す
  *   POST /tournament/admin/reset           対戦表の破棄
  *
  * 操作のあとは必ずリダイレクトする。画面を再読み込みしたときに
@@ -158,6 +159,16 @@ router.post('/import', function (req, res, next) {
 
     store.save(data);
     back(res, { ok: `${entry.coolName} 対 ${entry.hotName} の結果を取り込みました` });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post('/results/rename', function (req, res, next) {
+  try {
+    const entry = resultLog.renameRecent(Number(req.body.index), req.body.recordedAt, req.body.coolName, req.body.hotName);
+    if (!entry) return back(res, { err: 'その試合結果は見つかりませんでした。画面を読み直してからもう一度直してください' });
+    back(res, { ok: `名前を ${entry.coolName} 対 ${entry.hotName} に直しました` });
   } catch (e) {
     next(e);
   }
