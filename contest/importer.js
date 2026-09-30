@@ -86,15 +86,16 @@ function mergeIntoParticipants(data, remote) {
         summary.errors.push(`${name}: ${err.message}`);
         continue;
       }
-    } else if (p.name !== name || p.school !== String(e.school || '') || p.entryId !== e.id) {
-      p.name = name;
+    } else if ((!p.renamed && p.name !== name) || p.school !== String(e.school || '') || p.entryId !== e.id) {
+      // 会場で名前を直した参加者は、DO 版の名前に戻さない
+      if (!p.renamed) p.name = name;
       p.school = String(e.school || '');
       p.grade = String(e.grade || '');
       p.entryId = e.id;
       summary.updated.push(p.name);
     }
 
-    const up = remote.latest.get(String(e.name).trim());
+    const up = remote.latest.get(String(e.name).trim());   // 提出は DO 版のエントリー名で結びつく
     if (!up) {
       if (!p.program) summary.noProgram.push(p.name);
       continue;

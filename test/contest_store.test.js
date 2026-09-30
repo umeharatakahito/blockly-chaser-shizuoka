@@ -164,3 +164,28 @@ test('合言葉のない試合や知らない参加者の試合は記録しな�
   assert.strictEqual(recorder.handleResult({ roomId: 'room_011?q-nobody-x1', winner: 'cool' }), null);
   assert.deepStrictEqual(store.loadQualifier().runs, {});
 });
+
+/* --- 名前の修正 --- */
+
+test('名前を直せる。取り込み直しても DO 版の名前に戻らない', () => {
+  const data = store.loadParticipants();
+  const entries = [{ id: 'aaaa', name: 'a', school: '', hidden: 0 }];
+  importer.mergeIntoParticipants(data, remote({ entries, uploads: [{ id: 'u1', entry_name: 'a', file_name: 'a.blch', created_at: '1' }] }));
+  const p = data.participants[0];
+
+  store.renameParticipant(data, p.id, { name: 'あおい', school: '静岡中' });
+  assert.strictEqual(p.name, 'あおい');
+  assert.strictEqual(p.renamed, true);
+
+  // DO 版では「a」のまま。取り込み直しても名前は戻さず、提出(エントリー名 a で結びつく)は引き続き取れる
+  importer.mergeIntoParticipants(data, remote({ entries, uploads: [{ id: 'u2', entry_name: 'a', file_name: 'b.blch', created_at: '2' }] }));
+  assert.strictEqual(p.name, 'あおい');
+  assert.strictEqual(p.program.name, 'b.blch');
+});
+
+test('ほかの参加者と同じ名前には直せない', () => {
+  const data = store.loadParticipants();
+  store.addParticipant(data, { name: 'あおい' });
+  const b = store.addParticipant(data, { name: 'はると' });
+  assert.throws(() => store.renameParticipant(data, b.id, { name: 'あおい' }), /もう登録/);
+});

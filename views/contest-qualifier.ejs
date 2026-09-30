@@ -9,6 +9,8 @@
   <!-- 会場のスクリーンに映したままにするので、10秒ごとに読み直す -->
   <meta http-equiv="refresh" content="10">
   <style>
+    /* style.css はゲーム画面のためにスクロールを止めている。参加者が多いと順位表が画面に収まらないので戻す */
+    body { overflow: auto; }
     .q_area { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
     .q_title { text-align: center; color: #00639a; font-size: 28px; margin: 8px 0 4px; }
     .q_sub { text-align: center; color: #4d4d4d; font-size: 16px; margin: 0 0 20px; }

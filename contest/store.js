@@ -66,6 +66,8 @@ function normalizeParticipant(p) {
     school: cleanText(p.school, 50),
     grade: cleanText(p.grade, 20),
     entryId: String(p.entryId || ''),
+    // 会場で名前を直した参加者。DO 版から取り込み直しても名前を戻さない
+    renamed: Boolean(p.renamed),
     program: program && program.file ? program : null,
   };
 }
@@ -145,6 +147,23 @@ function programPath(p) {
   return fs.existsSync(full) ? full : null;
 }
 
+/**
+ * 名前と所属を直す。対戦画面ではこの名前で戦う(プログラムに書かれた名前は使わない)。
+ * エントリー名が「a」だった、などを当日その場で直すため。
+ */
+function renameParticipant(data, id, { name, school }) {
+  const p = findParticipant(data, id);
+  if (!p) throw new Error('その参加者は見つかりませんでした');
+  const clean = cleanName(name);
+  if (!clean) throw new Error('名前を入れてください');
+  if (data.participants.some((x) => x.id !== id && x.name === clean)) throw new Error(`${clean} はもう登録されています`);
+  const before = p.name;
+  p.name = clean;
+  if (school !== undefined) p.school = cleanText(school, 50);
+  if (before !== clean) p.renamed = true;
+  return p;
+}
+
 function removeParticipant(data, id) {
   const p = findParticipant(data, id);
   if (!p) return null;
@@ -201,6 +220,6 @@ function removeRun(data, id, index) {
 module.exports = {
   setDataDir, getDataDir, PROGRAM_EXT, MAX_PROGRAM_BYTES,
   cleanName, loadParticipants, saveParticipants, findParticipant, addParticipant, setProgram, programPath,
-  removeParticipant, newId,
+  removeParticipant, renameParticipant, newId,
   normalizeQualifierConfig, loadQualifier, saveQualifier, addRun, removeRun,
 };

@@ -5,6 +5,7 @@
  *   POST /contest/admin/import                  DO 版からエントリーと提出を取り込む
  *   POST /contest/admin/participants/add        参加者を手で足す(プログラムも一緒に渡せる)
  *   POST /contest/admin/participants/program    プログラムを差し替える(USB で持ち込まれた場合など)
+ *   POST /contest/admin/participants/rename     名前と所属を直す(対戦ではこの名前を使う)
  *   POST /contest/admin/participants/remove     参加者を外す
  *   GET  /contest/admin/program/:id             プログラム本体(対戦画面が読み込む)
  *   POST /contest/admin/qualifier/config        予選の設定(マップ・ボットの強さ・進出人数)
@@ -176,6 +177,27 @@ router.post('/participants/program', upload.single('file'), function (req, res) 
     const p = store.setProgram(data, String(req.body.id || ''), req.file.buffer, { name: fixName(req.file.originalname), source: 'local' });
     store.saveParticipants(data);
     back(res, { ok: `${p.name} のプログラムを差し替えました`, hash: 'participants' });
+  } catch (e) {
+    back(res, { err: e.message, hash: 'participants' });
+  }
+});
+
+router.post('/participants/rename', function (req, res) {
+  try {
+    const data = store.loadParticipants();
+    const before = (store.findParticipant(data, String(req.body.id || '')) || {}).name;
+    const p = store.renameParticipant(data, String(req.body.id || ''), { name: req.body.name, school: req.body.school });
+    store.saveParticipants(data);
+
+    // 決勝トーナメントの名簿にもいれば、そちらの名前もそろえる
+    const t = tournament.load();
+    const player = tournament.findPlayer(t, p.id);
+    if (player) {
+      player.name = p.name;
+      player.school = p.school;
+      tournament.save(t);
+    }
+    back(res, { ok: before === p.name ? `${p.name} の所属を直しました` : `${before} を ${p.name} に直しました`, hash: 'participants' });
   } catch (e) {
     back(res, { err: e.message, hash: 'participants' });
   }

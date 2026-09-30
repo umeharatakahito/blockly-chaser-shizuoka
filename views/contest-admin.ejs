@@ -32,6 +32,10 @@
     .c_form_row select, .c_form_row input[type=number] { padding: 6px 8px; font-size: 14px; }
     .c_form_row .admin_button { margin-top: 0; }
     .c_details summary { cursor: pointer; font-size: 13px; color: #00639a; }
+    .c_rename { display: flex; gap: 6px; align-items: center; }
+    .c_rename .admin_text { padding: 6px 8px; font-size: 14px; }
+    .c_rename .admin_text[name=name] { width: 150px; }
+    .c_rename .admin_text[name=school] { width: 130px; }
   </style>
 </head>
 
@@ -73,6 +77,7 @@
       </form>
       <p class="admin_note">
         公開サイトのエントリーと提出プログラムをまとめて持ってきます。何度押しても大丈夫です。
+        対戦ではここに出ている名前を使い、プログラムの中に書かれた名前（NoName など）は使いません。
         新しい提出があれば差し替え、会場で差し替えたプログラム（<span class="c_badge local">会場</span>）はそのまま残します。
         <% if (people.importedAt) { %><br>前回の取り込み: <%= new Date(people.importedAt).toLocaleString('ja-JP') %><% } %>
       </p>
@@ -81,13 +86,20 @@
         <p class="admin_note">まだ参加者がいません。上のボタンで取り込むか、下で手で足してください。</p>
       <% } else { %>
         <table class="admin_table">
-          <thead><tr><th>#</th><th>名前</th><th>所属</th><th>プログラム</th><th>差し替え</th><th></th></tr></thead>
+          <thead><tr><th>#</th><th>名前・所属（対戦ではこの名前を使います）</th><th>プログラム</th><th>差し替え</th><th></th></tr></thead>
           <tbody>
             <% people.participants.forEach(function (p, i) { %>
               <tr>
                 <td><%= i + 1 %></td>
-                <td><%= p.name %></td>
-                <td class="admin_dim"><%= p.school %></td>
+                <td>
+                  <form method="post" action="/contest/admin/participants/rename" class="c_rename">
+                    <input type="hidden" name="id" value="<%= p.id %>">
+                    <input class="admin_text" type="text" name="name" value="<%= p.name %>" required maxlength="40" title="名前">
+                    <input class="admin_text" type="text" name="school" value="<%= p.school %>" placeholder="所属" maxlength="50" title="所属">
+                    <button class="admin_button_small" type="submit">直す</button>
+                  </form>
+                  <% if (p.renamed) { %><span class="c_badge local">会場で修正</span><% } %>
+                </td>
                 <td>
                   <% if (p.program) { %>
                     <a class="admin_link" href="/contest/admin/program/<%= p.id %>"><%= p.program.name %></a>

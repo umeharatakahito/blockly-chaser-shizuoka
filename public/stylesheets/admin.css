@@ -256,3 +256,9 @@
 }
 
 .admin_match.is_waiting .admin_match_players { color: #a0a0a0; }
+
+/*
+ * style.css はゲーム画面のために html, body のスクロールを止めている。
+ * admin.css を読むページ(運営画面)は縦に長いので、ここで戻す。
+ */
+body { overflow: auto; }
